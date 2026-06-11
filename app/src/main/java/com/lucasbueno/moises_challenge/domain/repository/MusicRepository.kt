@@ -5,13 +5,13 @@ import com.lucasbueno.moises_challenge.domain.model.Song
 import kotlinx.coroutines.flow.Flow
 
 interface MusicRepository {
-    fun observeSearchResults(query: String): Flow<List<Song>>
+    fun getSearchResultsFlow(query: String): Flow<List<Song>>
 
-    fun observeRecentlyPlayedSongs(limit: Int): Flow<List<Song>>
+    fun getRecentlyPlayedSongsFlow(limit: Int): Flow<List<Song>>
 
-    fun observeSong(songId: Long): Flow<Song?>
+    fun getSongFlow(songId: Long): Flow<Song?>
 
-    fun observeAlbum(albumId: Long): Flow<Album?>
+    fun getAlbumFlow(albumId: Long): Flow<Album?>
 
     suspend fun refreshSearch(query: String, limit: Int): Result<Unit>
 

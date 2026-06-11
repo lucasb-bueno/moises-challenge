@@ -17,22 +17,22 @@ class RoomMusicLocalDataSource(
     private val songDao = database.songDao()
     private val searchDao = database.searchDao()
 
-    override fun observeSearchResults(query: String): Flow<List<Song>> {
+    override fun getSearchResultsFlow(query: String): Flow<List<Song>> {
         return searchDao.observeSearchResults(query)
             .map { songs -> songs.map { it.toDomain() } }
     }
 
-    override fun observeRecentlyPlayedSongs(limit: Int): Flow<List<Song>> {
+    override fun getRecentlyPlayedSongsFlow(limit: Int): Flow<List<Song>> {
         return songDao.observeRecentlyPlayedSongs(limit)
             .map { songs -> songs.map { it.toDomain() } }
     }
 
-    override fun observeSong(songId: Long): Flow<Song?> {
+    override fun getSongFlow(songId: Long): Flow<Song?> {
         return songDao.observeSong(songId)
             .map { song -> song?.toDomain() }
     }
 
-    override fun observeAlbum(albumId: Long): Flow<Album?> {
+    override fun getAlbumFlow(albumId: Long): Flow<Album?> {
         return songDao.observeSongsByAlbum(albumId)
             .map { songs -> songs.map { it.toDomain() }.toAlbumOrNull(albumId) }
     }
