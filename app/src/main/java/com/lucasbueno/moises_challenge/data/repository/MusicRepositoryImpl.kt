@@ -5,9 +5,10 @@ import com.lucasbueno.moises_challenge.data.remote.MusicRemoteDataSource
 import com.lucasbueno.moises_challenge.domain.model.Album
 import com.lucasbueno.moises_challenge.domain.model.Song
 import com.lucasbueno.moises_challenge.domain.repository.MusicRepository
+import javax.inject.Inject
 import kotlinx.coroutines.flow.Flow
 
-class MusicRepositoryImpl(
+class MusicRepositoryImpl @Inject constructor(
     private val localDataSource: MusicLocalDataSource,
     private val remoteDataSource: MusicRemoteDataSource,
 ) : MusicRepository {
