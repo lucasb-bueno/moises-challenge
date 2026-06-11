@@ -4,8 +4,9 @@ import com.lucasbueno.moises_challenge.data.remote.api.ITunesApi
 import com.lucasbueno.moises_challenge.data.remote.dto.isSong
 import com.lucasbueno.moises_challenge.data.remote.dto.toSongOrNull
 import com.lucasbueno.moises_challenge.domain.model.Song
+import javax.inject.Inject
 
-class ITunesMusicRemoteDataSource(
+class ITunesMusicRemoteDataSource @Inject constructor(
     private val api: ITunesApi,
 ) : MusicRemoteDataSource {
     override suspend fun searchSongs(

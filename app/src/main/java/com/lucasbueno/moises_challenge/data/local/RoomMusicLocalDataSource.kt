@@ -8,10 +8,11 @@ import com.lucasbueno.moises_challenge.data.local.entity.toDomain
 import com.lucasbueno.moises_challenge.data.local.entity.toEntity
 import com.lucasbueno.moises_challenge.domain.model.Album
 import com.lucasbueno.moises_challenge.domain.model.Song
+import javax.inject.Inject
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
-class RoomMusicLocalDataSource(
+class RoomMusicLocalDataSource @Inject constructor(
     private val database: MusicDatabase,
 ) : MusicLocalDataSource {
     private val songDao = database.songDao()
