@@ -46,7 +46,7 @@ class RoomMusicLocalDataSourceTest {
             updatedAtMillis = 1_000L,
         )
 
-        val results = dataSource.observeSearchResults("daft punk").first()
+        val results = dataSource.getSearchResultsFlow("daft punk").first()
         val metadata = dataSource.getSearchMetadata("daft punk")
 
         assertEquals(listOf("Second", "First"), results.map { it.name })
@@ -70,7 +70,7 @@ class RoomMusicLocalDataSourceTest {
             updatedAtMillis = 2_000L,
         )
 
-        val results = dataSource.observeSearchResults("radiohead").first()
+        val results = dataSource.getSearchResultsFlow("radiohead").first()
         val metadata = dataSource.getSearchMetadata("radiohead")
 
         assertEquals(listOf("First", "Second"), results.map { it.name })
@@ -78,7 +78,7 @@ class RoomMusicLocalDataSourceTest {
     }
 
     @Test
-    fun `observeAlbum builds album from cached songs`() = runTest {
+    fun `getAlbumFlow builds album from cached songs`() = runTest {
         dataSource.cacheSongs(
             listOf(
                 song(
@@ -92,7 +92,7 @@ class RoomMusicLocalDataSourceTest {
             ),
         )
 
-        val album = dataSource.observeAlbum(albumId = 10L).first()
+        val album = dataSource.getAlbumFlow(albumId = 10L).first()
 
         assertEquals(10L, album?.id)
         assertEquals("Album name", album?.name)
@@ -102,8 +102,8 @@ class RoomMusicLocalDataSourceTest {
     }
 
     @Test
-    fun `observeAlbum emits null when album has no cached songs`() = runTest {
-        val album = dataSource.observeAlbum(albumId = 10L).first()
+    fun `getAlbumFlow emits null when album has no cached songs`() = runTest {
+        val album = dataSource.getAlbumFlow(albumId = 10L).first()
 
         assertNull(album)
     }
@@ -119,7 +119,7 @@ class RoomMusicLocalDataSourceTest {
         dataSource.markAsRecentlyPlayed(songId = 1L, playedAtMillis = 1_000L)
         dataSource.markAsRecentlyPlayed(songId = 2L, playedAtMillis = 2_000L)
 
-        val results = dataSource.observeRecentlyPlayedSongs(limit = 2).first()
+        val results = dataSource.getRecentlyPlayedSongsFlow(limit = 2).first()
 
         assertEquals(listOf("Latest", "Older"), results.map { it.name })
     }
