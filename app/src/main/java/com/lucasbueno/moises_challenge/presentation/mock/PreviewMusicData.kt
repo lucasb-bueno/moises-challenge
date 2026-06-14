@@ -2,6 +2,10 @@ package com.lucasbueno.moises_challenge.presentation.mock
 
 import com.lucasbueno.moises_challenge.domain.model.Album
 import com.lucasbueno.moises_challenge.domain.model.Song
+import com.lucasbueno.moises_challenge.presentation.common.ScreenState
+import com.lucasbueno.moises_challenge.presentation.feature.album.AlbumUiState
+import com.lucasbueno.moises_challenge.presentation.feature.player.SongDetailsUiState
+import com.lucasbueno.moises_challenge.presentation.feature.songs.SongsUiState
 
 object PreviewMusicData {
     val songs = listOf(
@@ -84,5 +88,54 @@ object PreviewMusicData {
         songs = albumSongs,
     )
 
-    fun songById(songId: Long): Song = songs.firstOrNull { it.id == songId } ?: songs[4]
+    fun songById(songId: Long): Song =
+        songs.firstOrNull { it.id == songId }
+            ?: albumSongs.firstOrNull { it.id == songId }
+            ?: songs[4]
+
+    fun albumById(albumId: Long): Album {
+        if (albumId == album.id) return album
+
+        val song = songs.firstOrNull { it.albumId == albumId } ?: songs[4]
+        return Album(
+            id = albumId,
+            name = song.albumName.orEmpty(),
+            artistName = song.artistName,
+            artworkUrl = song.artworkUrl,
+            songs = listOf(song),
+        )
+    }
+
+    fun songsUiState(query: String): SongsUiState {
+        val searchResults = if (query.isBlank()) {
+            emptyList()
+        } else {
+            songs.filter { song ->
+                song.name.contains(query, ignoreCase = true) ||
+                    song.artistName.contains(query, ignoreCase = true)
+            }
+        }
+
+        return SongsUiState(
+            query = query,
+            searchResultsState = ScreenState.Show,
+            searchResults = searchResults,
+            recentlyPlayedState = ScreenState.Show,
+            recentlyPlayedSongs = songs,
+            isLoadingNextPage = false,
+        )
+    }
+
+    fun songDetailsUiState(songId: Long): SongDetailsUiState =
+        SongDetailsUiState(
+            screenState = ScreenState.Show,
+            song = songById(songId),
+        )
+
+    fun albumUiState(albumId: Long): AlbumUiState =
+        AlbumUiState(
+            screenState = ScreenState.Show,
+            album = albumById(albumId),
+            isRefreshing = false,
+        )
 }

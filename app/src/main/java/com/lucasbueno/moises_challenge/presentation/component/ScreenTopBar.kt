@@ -6,6 +6,9 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowLeft
+import androidx.compose.material.icons.rounded.MoreHoriz
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -13,6 +16,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
+import com.lucasbueno.moises_challenge.ui.theme.MoiseschallengeTheme
 import com.lucasbueno.moises_challenge.ui.theme.MusicColors
 import com.lucasbueno.moises_challenge.ui.theme.MusicDimens
 
@@ -56,5 +61,54 @@ fun ScreenTopBar(
         ) {
             actions?.invoke()
         }
+    }
+}
+
+@Preview(showBackground = true, backgroundColor = 0xFF000000)
+@Composable
+private fun ScreenTopBarTitlePreview() {
+    MoiseschallengeTheme {
+        ScreenTopBar(title = "Songs")
+    }
+}
+
+@Preview(showBackground = true, backgroundColor = 0xFF000000)
+@Composable
+private fun ScreenTopBarNavigationPreview() {
+    MoiseschallengeTheme {
+        ScreenTopBar(
+            title = "Album title",
+            navigationIcon = {
+                CircleIconButton(
+                    icon = Icons.AutoMirrored.Rounded.KeyboardArrowLeft,
+                    contentDescription = "Back",
+                    onClick = {},
+                )
+            },
+        )
+    }
+}
+
+@Preview(showBackground = true, backgroundColor = 0xFF000000)
+@Composable
+private fun ScreenTopBarNavigationAndActionPreview() {
+    MoiseschallengeTheme {
+        ScreenTopBar(
+            title = "Album title",
+            navigationIcon = {
+                CircleIconButton(
+                    icon = Icons.AutoMirrored.Rounded.KeyboardArrowLeft,
+                    contentDescription = "Back",
+                    onClick = {},
+                )
+            },
+            actions = {
+                CircleIconButton(
+                    icon = Icons.Rounded.MoreHoriz,
+                    contentDescription = "More options",
+                    onClick = {},
+                )
+            },
+        )
     }
 }
