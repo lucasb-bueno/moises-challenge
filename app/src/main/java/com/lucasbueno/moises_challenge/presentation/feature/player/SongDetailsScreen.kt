@@ -30,12 +30,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.lucasbueno.moises_challenge.presentation.common.ScreenState
 import com.lucasbueno.moises_challenge.presentation.component.ArtworkImage
 import com.lucasbueno.moises_challenge.presentation.component.CircleIconButton
 import com.lucasbueno.moises_challenge.presentation.component.MoreOptionsBottomSheet
 import com.lucasbueno.moises_challenge.presentation.component.PlayerControls
 import com.lucasbueno.moises_challenge.presentation.component.PlayerTimeline
 import com.lucasbueno.moises_challenge.presentation.component.ScreenTopBar
+import com.lucasbueno.moises_challenge.presentation.component.ScreenStateContent
 import com.lucasbueno.moises_challenge.presentation.mock.PreviewMusicData
 import com.lucasbueno.moises_challenge.ui.theme.MoiseschallengeTheme
 import com.lucasbueno.moises_challenge.ui.theme.MusicColors
@@ -43,12 +45,14 @@ import com.lucasbueno.moises_challenge.ui.theme.MusicDimens
 
 @Composable
 fun SongDetailsScreen(
+    uiState: SongDetailsUiState,
     onBackClick: () -> Unit,
     onAlbumClick: (Long) -> Unit,
+    onRetryClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val song = PreviewMusicData.songById(5L)
     var showOptions by remember { mutableStateOf(false) }
+    val song = uiState.song
 
     Box(
         modifier = modifier
@@ -59,7 +63,7 @@ fun SongDetailsScreen(
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
             ScreenTopBar(
-                title = song.albumName.orEmpty(),
+                title = song?.albumName.orEmpty(),
                 navigationIcon = {
                     CircleIconButton(
                         icon = Icons.AutoMirrored.Rounded.KeyboardArrowLeft,
@@ -68,80 +72,94 @@ fun SongDetailsScreen(
                     )
                 },
                 actions = {
-                    CircleIconButton(
-                        icon = Icons.Rounded.MoreHoriz,
-                        contentDescription = "More options",
-                        onClick = { showOptions = true },
-                    )
+                    if (song != null) {
+                        CircleIconButton(
+                            icon = Icons.Rounded.MoreHoriz,
+                            contentDescription = "More options",
+                            onClick = { showOptions = true },
+                        )
+                    }
                 },
             )
 
-            Spacer(modifier = Modifier.height(92.dp))
-
-            ArtworkImage(
-                artworkUrl = song.artworkUrl,
-                contentDescription = song.name,
-                size = MusicDimens.PlayerArtworkSize,
-                shape = RoundedCornerShape(MusicDimens.LargeArtworkCornerRadius),
-                modifier = Modifier.align(Alignment.CenterHorizontally),
-            )
-
-            Spacer(modifier = Modifier.weight(1f))
-
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = MusicDimens.ScreenHorizontalPadding),
+            ScreenStateContent(
+                screenState = uiState.screenState,
+                onRetryClick = onRetryClick,
+                modifier = Modifier.weight(1f),
             ) {
-                Text(
-                    text = song.name,
-                    color = MusicColors.TextPrimary,
-                    style = MaterialTheme.typography.headlineLarge,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Text(
-                        text = song.artistName,
-                        color = MusicColors.TextSecondary,
-                        style = MaterialTheme.typography.bodyMedium,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.weight(1f),
+                if (song == null) return@ScreenStateContent
+
+                Column(modifier = Modifier.fillMaxSize()) {
+                    Spacer(modifier = Modifier.height(92.dp))
+
+                    ArtworkImage(
+                        artworkUrl = song.artworkUrl,
+                        contentDescription = song.name,
+                        size = MusicDimens.PlayerArtworkSize,
+                        shape = RoundedCornerShape(MusicDimens.LargeArtworkCornerRadius),
+                        modifier = Modifier.align(Alignment.CenterHorizontally),
                     )
-                    Icon(
-                        imageVector = Icons.Rounded.Repeat,
-                        contentDescription = "Repeat",
-                        tint = MusicColors.TextPrimary,
-                    )
+
+                    Spacer(modifier = Modifier.weight(1f))
+
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = MusicDimens.ScreenHorizontalPadding),
+                    ) {
+                        Text(
+                            text = song.name,
+                            color = MusicColors.TextPrimary,
+                            style = MaterialTheme.typography.headlineLarge,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Text(
+                                text = song.artistName,
+                                color = MusicColors.TextSecondary,
+                                style = MaterialTheme.typography.bodyMedium,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                modifier = Modifier.weight(1f),
+                            )
+                            Icon(
+                                imageVector = Icons.Rounded.Repeat,
+                                contentDescription = "Repeat",
+                                tint = MusicColors.TextPrimary,
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(18.dp))
+
+                        PlayerTimeline(
+                            progress = 0.32f,
+                            elapsedText = "1:26",
+                            remainingText = "-2:54",
+                        )
+
+                        Spacer(modifier = Modifier.height(26.dp))
+
+                        PlayerControls(
+                            isPlaying = false,
+                            onPreviousClick = {},
+                            onPlayPauseClick = {},
+                            onNextClick = {},
+                            modifier = Modifier.align(Alignment.CenterHorizontally),
+                        )
+
+                        Spacer(modifier = Modifier.height(34.dp))
+                    }
                 }
-
-                Spacer(modifier = Modifier.height(18.dp))
-
-                PlayerTimeline(
-                    progress = 0.32f,
-                    elapsedText = "1:26",
-                    remainingText = "-2:54",
-                )
-
-                Spacer(modifier = Modifier.height(26.dp))
-
-                PlayerControls(
-                    isPlaying = false,
-                    onPreviousClick = {},
-                    onPlayPauseClick = {},
-                    onNextClick = {},
-                    modifier = Modifier.align(Alignment.CenterHorizontally),
-                )
-
-                Spacer(modifier = Modifier.height(34.dp))
             }
         }
 
         if (showOptions) {
+            if (song == null) return@Box
+
             MoreOptionsBottomSheet(
                 title = song.name,
                 subtitle = song.artistName,
@@ -157,11 +175,41 @@ fun SongDetailsScreen(
 
 @Preview(showBackground = true, backgroundColor = 0xFF000000)
 @Composable
-private fun SongDetailsScreenPreview() {
+private fun SongDetailsScreenShowPreview() {
     MoiseschallengeTheme {
         SongDetailsScreen(
+            uiState = PreviewMusicData.songDetailsUiState(songId = 5L),
             onBackClick = {},
             onAlbumClick = {},
+            onRetryClick = {},
+        )
+    }
+}
+
+@Preview(showBackground = true, backgroundColor = 0xFF000000)
+@Composable
+private fun SongDetailsScreenLoadingPreview() {
+    MoiseschallengeTheme {
+        SongDetailsScreen(
+            uiState = SongDetailsUiState(screenState = ScreenState.Loading),
+            onBackClick = {},
+            onAlbumClick = {},
+            onRetryClick = {},
+        )
+    }
+}
+
+@Preview(showBackground = true, backgroundColor = 0xFF000000)
+@Composable
+private fun SongDetailsScreenErrorPreview() {
+    MoiseschallengeTheme {
+        SongDetailsScreen(
+            uiState = SongDetailsUiState(
+                screenState = ScreenState.Error("Unable to load song"),
+            ),
+            onBackClick = {},
+            onAlbumClick = {},
+            onRetryClick = {},
         )
     }
 }
