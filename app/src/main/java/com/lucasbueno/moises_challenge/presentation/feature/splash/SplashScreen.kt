@@ -16,7 +16,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.lucasbueno.moises_challenge.R
-import com.lucasbueno.moises_challenge.ui.theme.MoiseschallengeTheme
+import com.lucasbueno.moises_challenge.presentation.theme.MoiseschallengeTheme
 
 @Composable
 fun SplashScreen(modifier: Modifier = Modifier) {

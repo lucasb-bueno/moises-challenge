@@ -1,6 +1,5 @@
-package com.lucasbueno.moises_challenge.ui.theme
+package com.lucasbueno.moises_challenge.presentation.theme
 
-import android.app.Activity
 import android.os.Build
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme

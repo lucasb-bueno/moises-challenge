@@ -38,9 +38,9 @@ import com.lucasbueno.moises_challenge.presentation.component.MoreOptionsBottomS
 import com.lucasbueno.moises_challenge.presentation.component.ScreenStateContent
 import com.lucasbueno.moises_challenge.presentation.component.SongListItem
 import com.lucasbueno.moises_challenge.presentation.mock.PreviewMusicData
-import com.lucasbueno.moises_challenge.ui.theme.MoiseschallengeTheme
-import com.lucasbueno.moises_challenge.ui.theme.MusicColors
-import com.lucasbueno.moises_challenge.ui.theme.MusicDimens
+import com.lucasbueno.moises_challenge.presentation.theme.MoiseschallengeTheme
+import com.lucasbueno.moises_challenge.presentation.theme.MusicColors
+import com.lucasbueno.moises_challenge.presentation.theme.MusicDimens
 
 @Composable
 fun AlbumScreen(

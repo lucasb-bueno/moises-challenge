@@ -1,4 +1,4 @@
-package com.lucasbueno.moises_challenge.ui.theme
+package com.lucasbueno.moises_challenge.presentation.theme
 
 import androidx.compose.material3.Typography
 import androidx.compose.ui.text.TextStyle
