@@ -20,8 +20,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
-import com.lucasbueno.moises_challenge.ui.theme.MusicColors
-import com.lucasbueno.moises_challenge.ui.theme.MusicDimens
+import com.lucasbueno.moises_challenge.presentation.theme.MusicColors
+import com.lucasbueno.moises_challenge.presentation.theme.MusicDimens
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

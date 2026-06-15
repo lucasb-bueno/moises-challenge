@@ -41,9 +41,9 @@ import com.lucasbueno.moises_challenge.presentation.component.MusicSearchField
 import com.lucasbueno.moises_challenge.presentation.component.ScreenStateContent
 import com.lucasbueno.moises_challenge.presentation.component.SongListItem
 import com.lucasbueno.moises_challenge.presentation.mock.PreviewMusicData
-import com.lucasbueno.moises_challenge.ui.theme.MoiseschallengeTheme
-import com.lucasbueno.moises_challenge.ui.theme.MusicColors
-import com.lucasbueno.moises_challenge.ui.theme.MusicDimens
+import com.lucasbueno.moises_challenge.presentation.theme.MoiseschallengeTheme
+import com.lucasbueno.moises_challenge.presentation.theme.MusicColors
+import com.lucasbueno.moises_challenge.presentation.theme.MusicDimens
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.map

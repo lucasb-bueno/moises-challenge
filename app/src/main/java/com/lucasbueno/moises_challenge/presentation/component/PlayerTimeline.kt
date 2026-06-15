@@ -23,8 +23,8 @@ import androidx.compose.ui.semantics.progressBarRangeInfo
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.unit.dp
-import com.lucasbueno.moises_challenge.ui.theme.MusicColors
-import com.lucasbueno.moises_challenge.ui.theme.MusicDimens
+import com.lucasbueno.moises_challenge.presentation.theme.MusicColors
+import com.lucasbueno.moises_challenge.presentation.theme.MusicDimens
 
 @Composable
 fun PlayerTimeline(

@@ -1,7 +1,6 @@
 package com.lucasbueno.moises_challenge.presentation.feature.player
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -39,9 +38,9 @@ import com.lucasbueno.moises_challenge.presentation.component.PlayerTimeline
 import com.lucasbueno.moises_challenge.presentation.component.ScreenTopBar
 import com.lucasbueno.moises_challenge.presentation.component.ScreenStateContent
 import com.lucasbueno.moises_challenge.presentation.mock.PreviewMusicData
-import com.lucasbueno.moises_challenge.ui.theme.MoiseschallengeTheme
-import com.lucasbueno.moises_challenge.ui.theme.MusicColors
-import com.lucasbueno.moises_challenge.ui.theme.MusicDimens
+import com.lucasbueno.moises_challenge.presentation.theme.MoiseschallengeTheme
+import com.lucasbueno.moises_challenge.presentation.theme.MusicColors
+import com.lucasbueno.moises_challenge.presentation.theme.MusicDimens
 
 @Composable
 fun SongDetailsScreen(

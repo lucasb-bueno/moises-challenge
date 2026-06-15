@@ -6,7 +6,7 @@ import dagger.hilt.android.HiltAndroidApp
 import javax.inject.Inject
 
 @HiltAndroidApp
-class MoisesChallengeApplication : Application() {
+class RootApplication : Application() {
     @Inject
     lateinit var recentlyPlayedCacheRecycler: RecentlyPlayedCacheRecycler
 

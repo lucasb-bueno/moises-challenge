@@ -21,8 +21,8 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.lucasbueno.moises_challenge.ui.theme.MusicColors
-import com.lucasbueno.moises_challenge.ui.theme.MusicDimens
+import com.lucasbueno.moises_challenge.presentation.theme.MusicColors
+import com.lucasbueno.moises_challenge.presentation.theme.MusicDimens
 
 @Composable
 fun SongListItem(
