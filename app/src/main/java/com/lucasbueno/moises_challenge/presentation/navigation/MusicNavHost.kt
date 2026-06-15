@@ -13,6 +13,7 @@ import com.lucasbueno.moises_challenge.presentation.feature.album.AlbumScreen
 import com.lucasbueno.moises_challenge.presentation.feature.album.AlbumViewModel
 import com.lucasbueno.moises_challenge.presentation.feature.player.SongDetailsScreen
 import com.lucasbueno.moises_challenge.presentation.feature.player.SongDetailsViewModel
+import com.lucasbueno.moises_challenge.presentation.feature.splash.SplashScreen
 import com.lucasbueno.moises_challenge.presentation.feature.songs.SongsScreen
 import com.lucasbueno.moises_challenge.presentation.feature.songs.SongsViewModel
 import kotlinx.coroutines.delay
@@ -21,13 +22,26 @@ import kotlinx.coroutines.delay
 fun MusicNavHost(
     navController: NavHostController,
     modifier: Modifier = Modifier,
-    startDestination: SongsRoute = SongsRoute,
+    startDestination: Any = SplashRoute,
 ) {
     NavHost(
         navController = navController,
         startDestination = startDestination,
         modifier = modifier,
     ) {
+        composable<SplashRoute> {
+            LaunchedEffect(Unit) {
+                delay(SPLASH_DURATION_MILLIS)
+                navController.navigate(SongsRoute) {
+                    popUpTo<SplashRoute> {
+                        inclusive = true
+                    }
+                }
+            }
+
+            SplashScreen()
+        }
+
         composable<SongsRoute> {
             val viewModel = hiltViewModel<SongsViewModel>()
             val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -92,4 +106,5 @@ fun MusicNavHost(
     }
 }
 
+private const val SPLASH_DURATION_MILLIS = 1_200L
 private const val SEARCH_DEBOUNCE_MILLIS = 350L
