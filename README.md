@@ -7,7 +7,7 @@ Android music search app built with Kotlin and Jetpack Compose. The app searches
 - Search songs from iTunes with debounced input.
 - Paginated search results with local caching.
 - Recently played list backed by Room.
-- Song details screen with artwork, metadata, and player-style controls.
+- Song details screen with artwork, metadata, preview playback, timeline seeking, and 10-second forward/backward controls.
 - Album details screen populated from the iTunes lookup API.
 - Loading, empty, and error states for the main screens.
 - Compose previews for key UI states.
@@ -96,11 +96,24 @@ app/src/main/java/com/lucasbueno/moises_challenge
 
 1. Search requests fetch songs from iTunes and cache them locally.
 2. UI screens collect Room `Flow`s so cached changes update the UI automatically.
-3. Opening a song marks it as recently played.
+3. Starting a song preview marks it as recently played.
 4. Album screens refresh album tracks through the iTunes lookup endpoint and cache the returned songs.
+
+## Preview Playback
+
+The player screen uses the `previewUrl` returned by the iTunes Search API and plays it with Android `MediaPlayer`. Playback is local to the app: the iTunes API provides song metadata and preview audio URLs, but it does not provide playback commands, queue state, or full-track streaming.
+
+Supported player actions:
+
+- Play and pause the preview audio.
+- Seek with the timeline slider.
+- Jump backward or forward by 10 seconds.
+- Display elapsed and remaining preview time.
+
+If a song result does not include a preview URL, or the preview cannot be loaded, the player controls are disabled and the screen shows a preview unavailable message.
 
 ## Notes
 
 - The app does not require API keys; it uses `https://itunes.apple.com/`.
 - Room schema output is stored under `app/schemas`.
-- The song details screen currently provides a player-style UI and recently played tracking, but does not stream full audio playback.
+- iTunes preview audio is short promotional audio, not full song playback.
