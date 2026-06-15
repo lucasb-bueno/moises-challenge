@@ -1,6 +1,7 @@
 package com.lucasbueno.moises_challenge.presentation.feature.songs
 
 import com.lucasbueno.moises_challenge.MainDispatcherRule
+import com.lucasbueno.moises_challenge.domain.model.SearchPagination
 import com.lucasbueno.moises_challenge.domain.model.Song
 import com.lucasbueno.moises_challenge.domain.repository.MusicRepository
 import com.lucasbueno.moises_challenge.presentation.common.ScreenState
@@ -52,7 +53,7 @@ class SongsViewModelTest {
             every { repository.getSearchResultsFlow("radiohead") } returns searchResults
             coEvery {
                 repository.refreshSearch(query = "radiohead", limit = 20)
-            } returns Result.success(Unit)
+            } returns Result.success(SearchPagination(nextOffset = 20, reachedEnd = false))
 
             val viewModel = SongsViewModel(repository)
 
@@ -63,7 +64,26 @@ class SongsViewModelTest {
             assertEquals(" radiohead ", viewModel.uiState.value.query)
             assertEquals(ScreenState.Show, viewModel.uiState.value.searchResultsState)
             assertEquals(searchResults.value, viewModel.uiState.value.searchResults)
+            assertFalse(viewModel.uiState.value.hasReachedSearchEnd)
             coVerify { repository.refreshSearch(query = "radiohead", limit = 20) }
+        }
+
+    @Test
+    fun `search refresh exposes reached end in ui state`() =
+        runTest(mainDispatcherRule.testDispatcher) {
+            every { repository.getSearchResultsFlow("prince") } returns MutableStateFlow(listOf(song(id = 30L)))
+            coEvery {
+                repository.refreshSearch(query = "prince", limit = 20)
+            } returns Result.success(SearchPagination(nextOffset = 1, reachedEnd = true))
+
+            val viewModel = SongsViewModel(repository)
+
+            viewModel.onQueryChanged("prince")
+            viewModel.onSearch()
+            advanceUntilIdle()
+
+            assertEquals(ScreenState.Show, viewModel.uiState.value.searchResultsState)
+            assertEquals(true, viewModel.uiState.value.hasReachedSearchEnd)
         }
 
     @Test
@@ -88,10 +108,12 @@ class SongsViewModelTest {
     @Test
     fun `load next page failure stops loading and marks search component as error`() =
         runTest(mainDispatcherRule.testDispatcher) {
-            every { repository.getSearchResultsFlow("queen") } returns MutableStateFlow(emptyList())
+            every { repository.getSearchResultsFlow("queen") } returns MutableStateFlow(
+                listOf(song(id = 1L), song(id = 2L)),
+            )
             coEvery {
                 repository.refreshSearch(query = "queen", limit = 20)
-            } returns Result.success(Unit)
+            } returns Result.success(SearchPagination(nextOffset = 20, reachedEnd = false))
             coEvery {
                 repository.loadNextSearchPage(query = "queen", limit = 20)
             } returns Result.failure(IllegalStateException("next page failed"))
@@ -106,6 +128,55 @@ class SongsViewModelTest {
 
             assertEquals(ScreenState.Error("next page failed"), viewModel.uiState.value.searchResultsState)
             assertFalse(viewModel.uiState.value.isLoadingNextPage)
+        }
+
+    @Test
+    fun `load next page is called once for the same query and unchanged result count`() =
+        runTest(mainDispatcherRule.testDispatcher) {
+            val searchResults = MutableStateFlow(listOf(song(id = 1L), song(id = 2L)))
+            every { repository.getSearchResultsFlow("queen") } returns searchResults
+            coEvery {
+                repository.refreshSearch(query = "queen", limit = 20)
+            } returns Result.success(SearchPagination(nextOffset = 2, reachedEnd = false))
+            coEvery {
+                repository.loadNextSearchPage(query = "queen", limit = 20)
+            } returns Result.failure(IllegalStateException("next page failed"))
+
+            val viewModel = SongsViewModel(repository)
+
+            viewModel.onQueryChanged("queen")
+            viewModel.onSearch()
+            advanceUntilIdle()
+            viewModel.onLoadNextPage()
+            advanceUntilIdle()
+            viewModel.onLoadNextPage()
+            advanceUntilIdle()
+
+            coVerify(exactly = 1) {
+                repository.loadNextSearchPage(query = "queen", limit = 20)
+            }
+        }
+
+    @Test
+    fun `load next page is skipped after search reaches end`() =
+        runTest(mainDispatcherRule.testDispatcher) {
+            every { repository.getSearchResultsFlow("queen") } returns MutableStateFlow(emptyList())
+            coEvery {
+                repository.refreshSearch(query = "queen", limit = 20)
+            } returns Result.success(SearchPagination(nextOffset = 1, reachedEnd = true))
+
+            val viewModel = SongsViewModel(repository)
+
+            viewModel.onQueryChanged("queen")
+            viewModel.onSearch()
+            advanceUntilIdle()
+            viewModel.onLoadNextPage()
+            advanceUntilIdle()
+
+            assertEquals(true, viewModel.uiState.value.hasReachedSearchEnd)
+            coVerify(exactly = 0) {
+                repository.loadNextSearchPage(query = "queen", limit = 20)
+            }
         }
 
     private fun song(id: Long): Song {

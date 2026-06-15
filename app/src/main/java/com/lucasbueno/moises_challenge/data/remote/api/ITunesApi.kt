@@ -11,7 +11,6 @@ interface ITunesApi {
         @Query("media") media: String,
         @Query("entity") entity: String,
         @Query("limit") limit: Int,
-        @Query("offset") offset: Int,
     ): ITunesSearchResponseDto
 
     @GET("lookup")

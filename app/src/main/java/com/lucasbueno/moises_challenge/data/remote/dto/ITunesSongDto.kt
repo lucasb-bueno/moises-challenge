@@ -1,35 +1,37 @@
 package com.lucasbueno.moises_challenge.data.remote.dto
 
 import com.lucasbueno.moises_challenge.domain.model.Song
-import com.squareup.moshi.Json
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 
+@Serializable
 data class ITunesSongDto(
-    @param:Json(name = "wrapperType")
-    val wrapperType: String?,
-    @param:Json(name = "kind")
-    val kind: String?,
-    @param:Json(name = "artistId")
-    val artistId: Long?,
-    @param:Json(name = "collectionId")
-    val collectionId: Long?,
-    @param:Json(name = "trackId")
-    val trackId: Long?,
-    @param:Json(name = "artistName")
-    val artistName: String?,
-    @param:Json(name = "collectionName")
-    val collectionName: String?,
-    @param:Json(name = "trackName")
-    val trackName: String?,
-    @param:Json(name = "artworkUrl100")
-    val artworkUrl100: String?,
-    @param:Json(name = "previewUrl")
-    val previewUrl: String?,
-    @param:Json(name = "trackTimeMillis")
-    val trackTimeMillis: Long?,
-    @param:Json(name = "primaryGenreName")
-    val primaryGenreName: String?,
-    @param:Json(name = "releaseDate")
-    val releaseDate: String?,
+    @SerialName("wrapperType")
+    val wrapperType: String? = null,
+    @SerialName("kind")
+    val kind: String? = null,
+    @SerialName("artistId")
+    val artistId: Long? = null,
+    @SerialName("collectionId")
+    val collectionId: Long? = null,
+    @SerialName("trackId")
+    val trackId: Long? = null,
+    @SerialName("artistName")
+    val artistName: String? = null,
+    @SerialName("collectionName")
+    val collectionName: String? = null,
+    @SerialName("trackName")
+    val trackName: String? = null,
+    @SerialName("artworkUrl100")
+    val artworkUrl100: String? = null,
+    @SerialName("previewUrl")
+    val previewUrl: String? = null,
+    @SerialName("trackTimeMillis")
+    val trackTimeMillis: Long? = null,
+    @SerialName("primaryGenreName")
+    val primaryGenreName: String? = null,
+    @SerialName("releaseDate")
+    val releaseDate: String? = null,
 )
 
 fun ITunesSongDto.isSong(): Boolean = wrapperType == "track" && kind == "song" && trackId != null

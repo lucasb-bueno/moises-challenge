@@ -1,10 +1,12 @@
 package com.lucasbueno.moises_challenge.data.remote.dto
 
-import com.squareup.moshi.Json
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 
+@Serializable
 data class ITunesSearchResponseDto(
-    @param:Json(name = "resultCount")
-    val resultCount: Int,
-    @param:Json(name = "results")
-    val results: List<ITunesSongDto>,
+    @SerialName("resultCount")
+    val resultCount: Int = 0,
+    @SerialName("results")
+    val results: List<ITunesSongDto> = emptyList(),
 )

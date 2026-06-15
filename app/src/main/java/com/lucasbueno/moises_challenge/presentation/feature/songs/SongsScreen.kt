@@ -14,13 +14,18 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -34,6 +39,9 @@ import com.lucasbueno.moises_challenge.presentation.mock.PreviewMusicData
 import com.lucasbueno.moises_challenge.ui.theme.MoiseschallengeTheme
 import com.lucasbueno.moises_challenge.ui.theme.MusicColors
 import com.lucasbueno.moises_challenge.ui.theme.MusicDimens
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.map
 
 @Composable
 fun SongsScreen(
@@ -41,12 +49,44 @@ fun SongsScreen(
     onQueryChanged: (String) -> Unit,
     onSongClick: (Long) -> Unit,
     onAlbumClick: (Long) -> Unit,
+    onLoadNextPage: () -> Unit,
+    onRetryClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var selectedSong by remember { mutableStateOf<Song?>(null) }
     val isSearching = uiState.query.isNotBlank()
     val songs = if (isSearching) uiState.searchResults else uiState.recentlyPlayedSongs
     val listState = if (isSearching) uiState.searchResultsState else uiState.recentlyPlayedState
+    val lazyListState = rememberLazyListState()
+
+    LaunchedEffect(
+        lazyListState,
+        isSearching,
+        uiState.query,
+        songs.size,
+        uiState.isLoadingNextPage,
+        uiState.hasReachedSearchEnd,
+    ) {
+        if (
+            !isSearching ||
+            songs.isEmpty() ||
+            uiState.isLoadingNextPage ||
+            uiState.hasReachedSearchEnd
+        ) {
+            return@LaunchedEffect
+        }
+
+        snapshotFlow { lazyListState.layoutInfo.visibleItemsInfo.lastOrNull()?.index }
+            .map { lastVisibleIndex ->
+                lastVisibleIndex != null &&
+                    lastVisibleIndex >= songs.lastIndex - PAGINATION_PREFETCH_THRESHOLD
+            }
+            .distinctUntilChanged()
+            .filter { shouldLoadNextPage -> shouldLoadNextPage }
+            .collect {
+                onLoadNextPage()
+            }
+    }
 
     Box(
         modifier = modifier
@@ -84,8 +124,10 @@ fun SongsScreen(
             ScreenStateContent(
                 screenState = listState,
                 modifier = Modifier.fillMaxSize(),
+                onRetryClick = onRetryClick,
             ) {
                 LazyColumn(
+                    state = lazyListState,
                     modifier = Modifier.fillMaxSize(),
                     contentPadding = PaddingValues(
                         start = MusicDimens.ScreenHorizontalPadding,
@@ -106,6 +148,19 @@ fun SongsScreen(
                             onMoreClick = { selectedSong = song },
                         )
                     }
+
+                    if (uiState.isLoadingNextPage) {
+                        item(key = "search-loading-next-page") {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 16.dp),
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                CircularProgressIndicator(color = MusicColors.TextPrimary)
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -124,6 +179,8 @@ fun SongsScreen(
     }
 }
 
+private const val PAGINATION_PREFETCH_THRESHOLD = 3
+
 @Preview(showBackground = true, backgroundColor = 0xFF000000)
 @Composable
 private fun SongsScreenDefaultPreview() {
@@ -133,6 +190,8 @@ private fun SongsScreenDefaultPreview() {
             onQueryChanged = {},
             onSongClick = {},
             onAlbumClick = {},
+            onLoadNextPage = {},
+            onRetryClick = {},
         )
     }
 }
@@ -146,6 +205,8 @@ private fun SongsScreenSearchPreview() {
             onQueryChanged = {},
             onSongClick = {},
             onAlbumClick = {},
+            onLoadNextPage = {},
+            onRetryClick = {},
         )
     }
 }
@@ -161,6 +222,8 @@ private fun SongsScreenRecentlyPlayedLoadingPreview() {
             onQueryChanged = {},
             onSongClick = {},
             onAlbumClick = {},
+            onLoadNextPage = {},
+            onRetryClick = {},
         )
     }
 }
@@ -176,6 +239,8 @@ private fun SongsScreenSearchErrorPreview() {
             onQueryChanged = {},
             onSongClick = {},
             onAlbumClick = {},
+            onLoadNextPage = {},
+            onRetryClick = {},
         )
     }
 }

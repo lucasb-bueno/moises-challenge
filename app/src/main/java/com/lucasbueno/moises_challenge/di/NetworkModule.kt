@@ -5,10 +5,12 @@ import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
+import kotlinx.serialization.json.Json
+import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
-import retrofit2.converter.moshi.MoshiConverterFactory
+import retrofit2.converter.kotlinx.serialization.asConverterFactory
 import javax.inject.Singleton
 
 @Module
@@ -31,10 +33,14 @@ object NetworkModule {
     fun provideRetrofit(
         okHttpClient: OkHttpClient,
     ): Retrofit {
+        val json = Json {
+            ignoreUnknownKeys = true
+        }
+
         return Retrofit.Builder()
             .baseUrl(ITUNES_BASE_URL)
             .client(okHttpClient)
-            .addConverterFactory(MoshiConverterFactory.create())
+            .addConverterFactory(json.asConverterFactory(JSON_MEDIA_TYPE.toMediaType()))
             .build()
     }
 
@@ -47,4 +53,5 @@ object NetworkModule {
     }
 
     private const val ITUNES_BASE_URL = "https://itunes.apple.com/"
+    private const val JSON_MEDIA_TYPE = "application/json"
 }
