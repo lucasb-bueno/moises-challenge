@@ -16,6 +16,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.lucasbueno.moises_challenge.ui.theme.MusicColors
@@ -33,13 +36,20 @@ fun SongListItem(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick)
+            .clickable(
+                onClickLabel = "Open song details",
+                role = Role.Button,
+                onClick = onClick,
+            )
+            .semantics(mergeDescendants = true) {
+                contentDescription = "$title, $subtitle"
+            }
             .padding(vertical = 6.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         ArtworkImage(
             artworkUrl = artworkUrl,
-            contentDescription = title,
+            contentDescription = null,
         )
         Spacer(modifier = Modifier.width(MusicDimens.RowGap))
         Column(modifier = Modifier.weight(1f)) {
@@ -61,7 +71,7 @@ fun SongListItem(
         IconButton(onClick = onMoreClick) {
             Icon(
                 imageVector = Icons.Rounded.MoreHoriz,
-                contentDescription = "More options",
+                contentDescription = "More options for $title",
                 tint = MusicColors.IconMuted,
             )
         }

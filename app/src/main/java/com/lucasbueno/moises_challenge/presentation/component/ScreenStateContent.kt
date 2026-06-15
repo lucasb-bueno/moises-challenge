@@ -12,6 +12,10 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import com.lucasbueno.moises_challenge.presentation.common.ScreenState
@@ -41,7 +45,12 @@ fun ScreenStateContent(
 @Composable
 private fun LoadingState(modifier: Modifier = Modifier) {
     Box(
-        modifier = modifier.fillMaxSize(),
+        modifier = modifier
+            .fillMaxSize()
+            .semantics {
+                contentDescription = "Loading"
+                liveRegion = LiveRegionMode.Polite
+            },
         contentAlignment = Alignment.Center,
     ) {
         CircularProgressIndicator(color = MusicColors.TextPrimary)
@@ -57,7 +66,10 @@ private fun ErrorState(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .padding(MusicDimens.ScreenHorizontalPadding),
+            .padding(MusicDimens.ScreenHorizontalPadding)
+            .semantics {
+                liveRegion = LiveRegionMode.Polite
+            },
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {

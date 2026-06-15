@@ -27,6 +27,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.lucasbueno.moises_challenge.domain.model.Song
@@ -103,6 +108,9 @@ fun SongsScreen(
                 color = MusicColors.TextPrimary,
                 style = MaterialTheme.typography.titleLarge,
                 modifier = Modifier
+                    .semantics {
+                        heading()
+                    }
                     .fillMaxWidth()
                     .padding(
                         start = MusicDimens.ScreenHorizontalPadding,
@@ -154,7 +162,11 @@ fun SongsScreen(
                             Box(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(vertical = 16.dp),
+                                    .padding(vertical = 16.dp)
+                                    .semantics {
+                                        contentDescription = "Loading more songs"
+                                        liveRegion = LiveRegionMode.Polite
+                                    },
                                 contentAlignment = Alignment.Center,
                             ) {
                                 CircularProgressIndicator(color = MusicColors.TextPrimary)

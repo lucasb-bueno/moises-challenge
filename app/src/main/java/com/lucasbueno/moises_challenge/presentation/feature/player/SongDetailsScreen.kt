@@ -128,7 +128,7 @@ fun SongDetailsScreen(
                             )
                             Icon(
                                 imageVector = Icons.Rounded.Repeat,
-                                contentDescription = "Repeat",
+                                contentDescription = null,
                                 tint = MusicColors.TextPrimary,
                             )
                         }
