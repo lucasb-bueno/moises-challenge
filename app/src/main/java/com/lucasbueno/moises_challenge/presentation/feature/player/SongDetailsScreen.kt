@@ -46,12 +46,13 @@ import com.lucasbueno.moises_challenge.ui.theme.MusicDimens
 @Composable
 fun SongDetailsScreen(
     uiState: SongDetailsUiState,
-    onBackClick: () -> Unit,
+    onBackClick: () -> Boolean,
     onAlbumClick: (Long) -> Unit,
     onRetryClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var showOptions by remember { mutableStateOf(false) }
+    var isBackNavigationRequested by remember { mutableStateOf(false) }
     val song = uiState.song
 
     Box(
@@ -68,7 +69,12 @@ fun SongDetailsScreen(
                     CircleIconButton(
                         icon = Icons.AutoMirrored.Rounded.KeyboardArrowLeft,
                         contentDescription = "Back",
-                        onClick = onBackClick,
+                        onClick = {
+                            if (!isBackNavigationRequested) {
+                                isBackNavigationRequested = onBackClick()
+                            }
+                        },
+                        enabled = !isBackNavigationRequested,
                     )
                 },
                 actions = {
@@ -179,7 +185,7 @@ private fun SongDetailsScreenShowPreview() {
     MoiseschallengeTheme {
         SongDetailsScreen(
             uiState = PreviewMusicData.songDetailsUiState(songId = 5L),
-            onBackClick = {},
+            onBackClick = { true },
             onAlbumClick = {},
             onRetryClick = {},
         )
@@ -192,7 +198,7 @@ private fun SongDetailsScreenLoadingPreview() {
     MoiseschallengeTheme {
         SongDetailsScreen(
             uiState = SongDetailsUiState(screenState = ScreenState.Loading),
-            onBackClick = {},
+            onBackClick = { true },
             onAlbumClick = {},
             onRetryClick = {},
         )
@@ -207,7 +213,7 @@ private fun SongDetailsScreenErrorPreview() {
             uiState = SongDetailsUiState(
                 screenState = ScreenState.Error("Unable to load song"),
             ),
-            onBackClick = {},
+            onBackClick = { true },
             onAlbumClick = {},
             onRetryClick = {},
         )

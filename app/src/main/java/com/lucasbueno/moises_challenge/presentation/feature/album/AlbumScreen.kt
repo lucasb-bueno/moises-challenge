@@ -45,13 +45,14 @@ import com.lucasbueno.moises_challenge.ui.theme.MusicDimens
 @Composable
 fun AlbumScreen(
     uiState: AlbumUiState,
-    onBackClick: () -> Unit,
+    onBackClick: () -> Boolean,
     onSongClick: (Long) -> Unit,
     onRetryClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val album = uiState.album
     var selectedSong by remember { mutableStateOf<Song?>(null) }
+    var isBackNavigationRequested by remember { mutableStateOf(false) }
 
     Box(
         modifier = modifier
@@ -71,7 +72,12 @@ fun AlbumScreen(
                 CircleIconButton(
                     icon = Icons.AutoMirrored.Rounded.KeyboardArrowLeft,
                     contentDescription = "Back",
-                    onClick = onBackClick,
+                    onClick = {
+                        if (!isBackNavigationRequested) {
+                            isBackNavigationRequested = onBackClick()
+                        }
+                    },
+                    enabled = !isBackNavigationRequested,
                 )
             }
 
@@ -156,7 +162,7 @@ private fun AlbumScreenShowPreview() {
     MoiseschallengeTheme {
         AlbumScreen(
             uiState = PreviewMusicData.albumUiState(albumId = 5L),
-            onBackClick = {},
+            onBackClick = { true },
             onSongClick = {},
             onRetryClick = {},
         )
@@ -169,7 +175,7 @@ private fun AlbumScreenLoadingPreview() {
     MoiseschallengeTheme {
         AlbumScreen(
             uiState = AlbumUiState(screenState = ScreenState.Loading),
-            onBackClick = {},
+            onBackClick = { true },
             onSongClick = {},
             onRetryClick = {},
         )
@@ -184,7 +190,7 @@ private fun AlbumScreenErrorPreview() {
             uiState = AlbumUiState(
                 screenState = ScreenState.Error("Unable to load album"),
             ),
-            onBackClick = {},
+            onBackClick = { true },
             onSongClick = {},
             onRetryClick = {},
         )

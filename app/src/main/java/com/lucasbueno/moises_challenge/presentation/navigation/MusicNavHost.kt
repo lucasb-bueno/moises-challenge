@@ -82,7 +82,7 @@ fun MusicNavHost(
 
             SongDetailsScreen(
                 uiState = uiState,
-                onBackClick = navController::popBackStack,
+                onBackClick = navController::navigateBack,
                 onAlbumClick = { albumId ->
                     navController.navigate(AlbumRoute(albumId))
                 },
@@ -96,7 +96,7 @@ fun MusicNavHost(
 
             AlbumScreen(
                 uiState = uiState,
-                onBackClick = navController::popBackStack,
+                onBackClick = navController::navigateBack,
                 onSongClick = { songId ->
                     navController.navigate(SongDetailsRoute(songId))
                 },
@@ -104,6 +104,10 @@ fun MusicNavHost(
             )
         }
     }
+}
+
+private fun NavHostController.navigateBack(): Boolean {
+    return previousBackStackEntry != null && navigateUp()
 }
 
 private const val SPLASH_DURATION_MILLIS = 1_200L
