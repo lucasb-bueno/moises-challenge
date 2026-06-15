@@ -74,12 +74,6 @@ fun MusicNavHost(
             val viewModel = hiltViewModel<SongDetailsViewModel>()
             val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
-            LaunchedEffect(uiState.song?.id) {
-                if (uiState.song != null) {
-                    viewModel.onPlaybackStarted()
-                }
-            }
-
             SongDetailsScreen(
                 uiState = uiState,
                 onBackClick = navController::navigateBack,
@@ -87,6 +81,7 @@ fun MusicNavHost(
                     navController.navigate(AlbumRoute(albumId))
                 },
                 onRetryClick = viewModel::onRetry,
+                onPlaybackStarted = viewModel::onPlaybackStarted,
             )
         }
 

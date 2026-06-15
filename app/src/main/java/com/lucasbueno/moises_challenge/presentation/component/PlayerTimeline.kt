@@ -1,22 +1,15 @@
 package com.lucasbueno.moises_challenge.presentation.component
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Slider
+import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.semantics.ProgressBarRangeInfo
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.progressBarRangeInfo
@@ -24,7 +17,6 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.unit.dp
 import com.lucasbueno.moises_challenge.presentation.theme.MusicColors
-import com.lucasbueno.moises_challenge.presentation.theme.MusicDimens
 
 @Composable
 fun PlayerTimeline(
@@ -32,8 +24,11 @@ fun PlayerTimeline(
     elapsedText: String,
     remainingText: String,
     modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    onProgressChange: ((Float) -> Unit)? = null,
 ) {
     val safeProgress = progress.coerceIn(0f, 1f)
+    val isSeekEnabled = enabled && onProgressChange != null
 
     Column(
         modifier = modifier
@@ -47,34 +42,24 @@ fun PlayerTimeline(
                 stateDescription = "$elapsedText elapsed, $remainingText remaining"
             },
     ) {
-        BoxWithConstraints(
+        Slider(
+            value = safeProgress,
+            onValueChange = { value ->
+                onProgressChange?.invoke(value.coerceIn(0f, 1f))
+            },
+            enabled = isSeekEnabled,
+            colors = SliderDefaults.colors(
+                thumbColor = MusicColors.TextPrimary,
+                activeTrackColor = MusicColors.TextPrimary,
+                inactiveTrackColor = MusicColors.SurfaceElevated,
+                disabledThumbColor = MusicColors.TextPrimary,
+                disabledActiveTrackColor = MusicColors.TextPrimary,
+                disabledInactiveTrackColor = MusicColors.SurfaceElevated,
+            ),
             modifier = Modifier
                 .fillMaxWidth()
-                .height(24.dp),
-            contentAlignment = Alignment.CenterStart,
-        ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(5.dp)
-                    .clip(RoundedCornerShape(50))
-                    .background(MusicColors.SurfaceElevated),
-            )
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth(safeProgress)
-                    .height(5.dp)
-                    .clip(RoundedCornerShape(50))
-                    .background(MusicColors.TextPrimary),
-            )
-            Box(
-                modifier = Modifier
-                    .offset(x = (maxWidth - MusicDimens.TimelineThumbSize) * safeProgress)
-                    .size(MusicDimens.TimelineThumbSize)
-                    .clip(CircleShape)
-                    .background(MusicColors.TextPrimary),
-            )
-        }
+                .padding(vertical = 2.dp),
+        )
         Row(modifier = Modifier.fillMaxWidth()) {
             Text(
                 text = elapsedText,
