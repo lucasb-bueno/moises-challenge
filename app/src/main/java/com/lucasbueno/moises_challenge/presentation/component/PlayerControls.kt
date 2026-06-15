@@ -6,10 +6,10 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Forward10
 import androidx.compose.material.icons.rounded.Pause
 import androidx.compose.material.icons.rounded.PlayArrow
-import androidx.compose.material.icons.rounded.SkipNext
-import androidx.compose.material.icons.rounded.SkipPrevious
+import androidx.compose.material.icons.rounded.Replay10
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
@@ -24,26 +24,33 @@ import com.lucasbueno.moises_challenge.presentation.theme.MusicDimens
 @Composable
 fun PlayerControls(
     isPlaying: Boolean,
-    onPreviousClick: () -> Unit,
+    onBackwardClick: () -> Unit,
     onPlayPauseClick: () -> Unit,
-    onNextClick: () -> Unit,
+    onForwardClick: () -> Unit,
     modifier: Modifier = Modifier,
+    enabled: Boolean = true,
 ) {
+    val iconTint = if (enabled) MusicColors.TextPrimary else MusicColors.IconMuted
+
     Row(
         modifier = modifier,
         horizontalArrangement = Arrangement.spacedBy(24.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        IconButton(onClick = onPreviousClick) {
+        IconButton(
+            onClick = onBackwardClick,
+            enabled = enabled,
+        ) {
             Icon(
-                imageVector = Icons.Rounded.SkipPrevious,
-                contentDescription = "Previous song",
-                tint = MusicColors.TextPrimary,
+                imageVector = Icons.Rounded.Replay10,
+                contentDescription = "Seek backward 10 seconds",
+                tint = iconTint,
                 modifier = Modifier.size(32.dp),
             )
         }
         IconButton(
             onClick = onPlayPauseClick,
+            enabled = enabled,
             colors = IconButtonDefaults.iconButtonColors(contentColor = MusicColors.TextPrimary),
             modifier = Modifier
                 .size(MusicDimens.PlayerButtonSize)
@@ -53,14 +60,18 @@ fun PlayerControls(
             Icon(
                 imageVector = if (isPlaying) Icons.Rounded.Pause else Icons.Rounded.PlayArrow,
                 contentDescription = if (isPlaying) "Pause preview" else "Play preview",
+                tint = iconTint,
                 modifier = Modifier.size(34.dp),
             )
         }
-        IconButton(onClick = onNextClick) {
+        IconButton(
+            onClick = onForwardClick,
+            enabled = enabled,
+        ) {
             Icon(
-                imageVector = Icons.Rounded.SkipNext,
-                contentDescription = "Next song",
-                tint = MusicColors.TextPrimary,
+                imageVector = Icons.Rounded.Forward10,
+                contentDescription = "Seek forward 10 seconds",
+                tint = iconTint,
                 modifier = Modifier.size(32.dp),
             )
         }
