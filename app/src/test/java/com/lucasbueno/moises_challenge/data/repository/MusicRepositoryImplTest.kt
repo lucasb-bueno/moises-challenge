@@ -60,6 +60,8 @@ class MusicRepositoryImplTest {
                 nextOffset = 2,
                 reachedEnd = true,
                 updatedAtMillis = any(),
+                songCacheMaxSize = 200,
+                searchCacheMaxQueries = 20,
             )
         }
 
@@ -75,6 +77,8 @@ class MusicRepositoryImplTest {
                 nextOffset = 2,
                 reachedEnd = true,
                 updatedAtMillis = any(),
+                songCacheMaxSize = 200,
+                searchCacheMaxQueries = 20,
             )
         }
     }
@@ -98,6 +102,8 @@ class MusicRepositoryImplTest {
                 nextOffset = any(),
                 reachedEnd = any(),
                 updatedAtMillis = any(),
+                songCacheMaxSize = any(),
+                searchCacheMaxQueries = any(),
             )
         }
     }
@@ -119,6 +125,8 @@ class MusicRepositoryImplTest {
                 nextOffset = 23,
                 reachedEnd = true,
                 updatedAtMillis = any(),
+                songCacheMaxSize = 200,
+                searchCacheMaxQueries = 20,
             )
         }
 
@@ -134,6 +142,8 @@ class MusicRepositoryImplTest {
                 nextOffset = 23,
                 reachedEnd = true,
                 updatedAtMillis = any(),
+                songCacheMaxSize = 200,
+                searchCacheMaxQueries = 20,
             )
         }
     }
@@ -153,6 +163,8 @@ class MusicRepositoryImplTest {
                 nextOffset = 20,
                 reachedEnd = false,
                 updatedAtMillis = any(),
+                songCacheMaxSize = 200,
+                searchCacheMaxQueries = 20,
             )
         }
 
@@ -171,6 +183,8 @@ class MusicRepositoryImplTest {
                 nextOffset = 20,
                 reachedEnd = false,
                 updatedAtMillis = any(),
+                songCacheMaxSize = 200,
+                searchCacheMaxQueries = 20,
             )
         }
     }
@@ -196,6 +210,8 @@ class MusicRepositoryImplTest {
                 nextOffset = any(),
                 reachedEnd = any(),
                 updatedAtMillis = any(),
+                songCacheMaxSize = any(),
+                searchCacheMaxQueries = any(),
             )
         }
     }
@@ -203,14 +219,47 @@ class MusicRepositoryImplTest {
     @Test
     fun `markAsRecentlyPlayed stores played timestamp in local cache`() = runTest {
         coJustRun {
-            localDataSource.markAsRecentlyPlayed(songId = 10L, playedAtMillis = any())
+            localDataSource.markAsRecentlyPlayed(
+                songId = 10L,
+                playedAtMillis = any(),
+                recentlyPlayedMaxSize = 7,
+                songCacheMaxSize = 200,
+            )
         }
 
         val result = repository.markAsRecentlyPlayed(songId = 10L)
 
         assertTrue(result.isSuccess)
         coVerify {
-            localDataSource.markAsRecentlyPlayed(songId = 10L, playedAtMillis = any())
+            localDataSource.markAsRecentlyPlayed(
+                songId = 10L,
+                playedAtMillis = any(),
+                recentlyPlayedMaxSize = 7,
+                songCacheMaxSize = 200,
+            )
+        }
+    }
+
+    @Test
+    fun `recycleRecentlyPlayedCache removes expired and overflow items from local cache`() = runTest {
+        coJustRun {
+            localDataSource.recycleRecentlyPlayedCache(
+                recentlyPlayedExpiresBeforeMillis = any(),
+                recentlyPlayedMaxSize = 7,
+            )
+        }
+
+        val result = repository.recycleRecentlyPlayedCache(
+            recentlyPlayedMaxAgeMillis = 5 * 60 * 1_000L,
+            recentlyPlayedMaxSize = 7,
+        )
+
+        assertTrue(result.isSuccess)
+        coVerify {
+            localDataSource.recycleRecentlyPlayedCache(
+                recentlyPlayedExpiresBeforeMillis = any(),
+                recentlyPlayedMaxSize = 7,
+            )
         }
     }
 
@@ -219,12 +268,24 @@ class MusicRepositoryImplTest {
         val songs = listOf(song(id = 1L, albumId = 100L), song(id = 2L, albumId = 100L))
 
         coEvery { remoteDataSource.lookupAlbumSongs(albumId = 100L) } returns songs
-        coJustRun { localDataSource.cacheSongs(songs) }
+        coJustRun {
+            localDataSource.cacheSongs(
+                songs = songs,
+                accessedAtMillis = any(),
+                songCacheMaxSize = 200,
+            )
+        }
 
         val result = repository.refreshAlbum(albumId = 100L)
 
         assertTrue(result.isSuccess)
-        coVerify { localDataSource.cacheSongs(songs) }
+        coVerify {
+            localDataSource.cacheSongs(
+                songs = songs,
+                accessedAtMillis = any(),
+                songCacheMaxSize = 200,
+            )
+        }
     }
 
     @Test
@@ -237,7 +298,13 @@ class MusicRepositoryImplTest {
 
         assertFalse(result.isSuccess)
         assertSame(exception, result.exceptionOrNull())
-        coVerify(exactly = 0) { localDataSource.cacheSongs(any()) }
+        coVerify(exactly = 0) {
+            localDataSource.cacheSongs(
+                songs = any(),
+                accessedAtMillis = any(),
+                songCacheMaxSize = any(),
+            )
+        }
     }
 
     private fun song(

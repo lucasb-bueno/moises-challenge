@@ -152,6 +152,7 @@ class MusicDatabaseTest {
             durationMillis = null,
             genre = null,
             releaseDate = null,
+            lastAccessedAtMillis = 1_000L,
         )
     }
 }

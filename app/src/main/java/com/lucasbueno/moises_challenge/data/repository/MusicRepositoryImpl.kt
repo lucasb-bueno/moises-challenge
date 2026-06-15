@@ -3,6 +3,7 @@ package com.lucasbueno.moises_challenge.data.repository
 import com.lucasbueno.moises_challenge.data.local.MusicLocalDataSource
 import com.lucasbueno.moises_challenge.data.remote.MusicRemoteDataSource
 import com.lucasbueno.moises_challenge.domain.model.Album
+import com.lucasbueno.moises_challenge.domain.model.RecentlyPlayedCachePolicy
 import com.lucasbueno.moises_challenge.domain.model.SearchPagination
 import com.lucasbueno.moises_challenge.domain.model.Song
 import com.lucasbueno.moises_challenge.domain.repository.MusicRepository
@@ -46,7 +47,9 @@ class MusicRepositoryImpl @Inject constructor(
                 songs = songs,
                 nextOffset = nextOffset,
                 reachedEnd = reachedEnd,
-                updatedAtMillis = System.currentTimeMillis(),
+                updatedAtMillis = currentTimeMillis(),
+                songCacheMaxSize = RecentlyPlayedCachePolicy.SONG_CACHE_MAX_SIZE,
+                searchCacheMaxQueries = RecentlyPlayedCachePolicy.SEARCH_CACHE_MAX_QUERIES,
             )
 
             SearchPagination(
@@ -83,7 +86,9 @@ class MusicRepositoryImpl @Inject constructor(
                 songs = songs,
                 nextOffset = nextOffset,
                 reachedEnd = reachedEnd,
-                updatedAtMillis = System.currentTimeMillis(),
+                updatedAtMillis = currentTimeMillis(),
+                songCacheMaxSize = RecentlyPlayedCachePolicy.SONG_CACHE_MAX_SIZE,
+                searchCacheMaxQueries = RecentlyPlayedCachePolicy.SEARCH_CACHE_MAX_QUERIES,
             )
 
             SearchPagination(
@@ -97,7 +102,21 @@ class MusicRepositoryImpl @Inject constructor(
         return runCatching {
             localDataSource.markAsRecentlyPlayed(
                 songId = songId,
-                playedAtMillis = System.currentTimeMillis(),
+                playedAtMillis = currentTimeMillis(),
+                recentlyPlayedMaxSize = RecentlyPlayedCachePolicy.MAX_SIZE,
+                songCacheMaxSize = RecentlyPlayedCachePolicy.SONG_CACHE_MAX_SIZE,
+            )
+        }
+    }
+
+    override suspend fun recycleRecentlyPlayedCache(
+        recentlyPlayedMaxAgeMillis: Long,
+        recentlyPlayedMaxSize: Int,
+    ): Result<Unit> {
+        return runCatching {
+            localDataSource.recycleRecentlyPlayedCache(
+                recentlyPlayedExpiresBeforeMillis = currentTimeMillis() - recentlyPlayedMaxAgeMillis,
+                recentlyPlayedMaxSize = recentlyPlayedMaxSize,
             )
         }
     }
@@ -105,13 +124,19 @@ class MusicRepositoryImpl @Inject constructor(
     override suspend fun refreshAlbum(albumId: Long): Result<Unit> {
         return runCatching {
             val songs = remoteDataSource.lookupAlbumSongs(albumId)
-            localDataSource.cacheSongs(songs)
+            localDataSource.cacheSongs(
+                songs = songs,
+                accessedAtMillis = currentTimeMillis(),
+                songCacheMaxSize = RecentlyPlayedCachePolicy.SONG_CACHE_MAX_SIZE,
+            )
         }
     }
 
     private fun String.normalized(): String = trim()
 
     private fun List<Song>.reachedEnd(limit: Int): Boolean = size < limit
+
+    private fun currentTimeMillis(): Long = System.currentTimeMillis()
 
     private companion object {
         const val FIRST_PAGE_OFFSET = 0

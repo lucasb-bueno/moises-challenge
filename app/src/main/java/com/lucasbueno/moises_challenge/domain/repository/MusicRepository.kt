@@ -20,5 +20,10 @@ interface MusicRepository {
 
     suspend fun markAsRecentlyPlayed(songId: Long): Result<Unit>
 
+    suspend fun recycleRecentlyPlayedCache(
+        recentlyPlayedMaxAgeMillis: Long,
+        recentlyPlayedMaxSize: Int,
+    ): Result<Unit>
+
     suspend fun refreshAlbum(albumId: Long): Result<Unit>
 }
