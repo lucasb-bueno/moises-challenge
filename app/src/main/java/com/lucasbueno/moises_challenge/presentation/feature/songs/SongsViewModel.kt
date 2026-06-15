@@ -53,6 +53,14 @@ class SongsViewModel @Inject constructor(
             return
         }
 
+        _uiState.update { state ->
+            state.copy(
+                searchResultsState = ScreenState.Loading,
+                hasReachedSearchEnd = false,
+                isLoadingNextPage = false,
+            )
+        }
+
         collectSearchResults(query)
         refreshSearch(query)
     }
@@ -139,8 +147,14 @@ class SongsViewModel @Inject constructor(
                 }
                 .collect { songs ->
                     _uiState.update { state ->
+                        val searchResultsState = when {
+                            state.searchResultsState is ScreenState.Error -> state.searchResultsState
+                            songs.isNotEmpty() -> ScreenState.Show
+                            else -> state.searchResultsState
+                        }
+
                         state.copy(
-                            searchResultsState = ScreenState.Show,
+                            searchResultsState = searchResultsState,
                             searchResults = songs,
                         )
                     }
@@ -150,14 +164,6 @@ class SongsViewModel @Inject constructor(
 
     private fun refreshSearch(query: String) {
         searchRefreshJob = viewModelScope.launch {
-            _uiState.update { state ->
-                state.copy(
-                    searchResultsState = ScreenState.Loading,
-                    hasReachedSearchEnd = false,
-                    isLoadingNextPage = false,
-                )
-            }
-
             val result = repository.refreshSearch(query = query, limit = SEARCH_PAGE_SIZE)
 
             if (uiState.value.query.trim() != query) return@launch
