@@ -1,5 +1,8 @@
 # Moises Challenge
 
+<img width="320" height="714" alt="image" src="https://github.com/user-attachments/assets/3359b551-c316-472d-b786-1dac984203f6" />
+
+
 Android music search app built with Kotlin and Jetpack Compose. The app searches songs through the public iTunes Search API, stores results locally with Room, and presents a simple music browsing flow with recently played songs, song details, and album details.
 
 ## Features
