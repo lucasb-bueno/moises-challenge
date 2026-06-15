@@ -10,8 +10,11 @@ import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -103,6 +106,49 @@ class SongsViewModelTest {
 
             assertEquals(ScreenState.Error("network failed"), viewModel.uiState.value.searchResultsState)
             assertEquals(cachedSongs, viewModel.uiState.value.searchResults)
+        }
+
+    @Test
+    fun `empty local search results do not replace retry error with blank content`() =
+        runTest(mainDispatcherRule.testDispatcher) {
+            val searchResults = MutableSharedFlow<List<Song>>()
+            every { repository.getSearchResultsFlow("phoenix") } returns searchResults
+            coEvery {
+                repository.refreshSearch(query = "phoenix", limit = 20)
+            } returns Result.failure(IllegalStateException("network failed"))
+
+            val viewModel = SongsViewModel(repository)
+
+            viewModel.onQueryChanged("phoenix")
+            viewModel.onSearch()
+            advanceUntilIdle()
+            searchResults.emit(emptyList())
+            runCurrent()
+
+            assertEquals(ScreenState.Error("network failed"), viewModel.uiState.value.searchResultsState)
+            assertEquals(emptyList<Song>(), viewModel.uiState.value.searchResults)
+        }
+
+    @Test
+    fun `empty local search results keep retry loading while refresh is running`() =
+        runTest(mainDispatcherRule.testDispatcher) {
+            val searchResults = MutableStateFlow(emptyList<Song>())
+            every { repository.getSearchResultsFlow("phoenix") } returns searchResults
+            coEvery {
+                repository.refreshSearch(query = "phoenix", limit = 20)
+            } coAnswers {
+                delay(1_000)
+                Result.failure(IllegalStateException("network failed"))
+            }
+
+            val viewModel = SongsViewModel(repository)
+
+            viewModel.onQueryChanged("phoenix")
+            viewModel.onSearch()
+            runCurrent()
+
+            assertEquals(ScreenState.Loading, viewModel.uiState.value.searchResultsState)
+            assertEquals(emptyList<Song>(), viewModel.uiState.value.searchResults)
         }
 
     @Test
