@@ -17,6 +17,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.semantics.ProgressBarRangeInfo
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.progressBarRangeInfo
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.unit.dp
 import com.lucasbueno.moises_challenge.ui.theme.MusicColors
 import com.lucasbueno.moises_challenge.ui.theme.MusicDimens
@@ -30,7 +35,18 @@ fun PlayerTimeline(
 ) {
     val safeProgress = progress.coerceIn(0f, 1f)
 
-    Column(modifier = modifier.fillMaxWidth()) {
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .semantics(mergeDescendants = true) {
+                contentDescription = "Playback progress"
+                progressBarRangeInfo = ProgressBarRangeInfo(
+                    current = safeProgress,
+                    range = 0f..1f,
+                )
+                stateDescription = "$elapsedText elapsed, $remainingText remaining"
+            },
+    ) {
         BoxWithConstraints(
             modifier = Modifier
                 .fillMaxWidth()

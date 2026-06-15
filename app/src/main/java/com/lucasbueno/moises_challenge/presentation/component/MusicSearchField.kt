@@ -6,17 +6,22 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -29,11 +34,15 @@ fun MusicSearchField(
     onValueChange: (String) -> Unit,
     modifier: Modifier = Modifier,
     placeholder: String = "Search",
+    accessibilityLabel: String = "Search songs",
     enabled: Boolean = true,
 ) {
     BasicTextField(
         value = value,
         onValueChange = onValueChange,
+        modifier = modifier.semantics {
+            contentDescription = accessibilityLabel
+        },
         enabled = enabled,
         singleLine = true,
         textStyle = MaterialTheme.typography.bodyMedium.copy(color = MusicColors.TextPrimary),
@@ -41,7 +50,7 @@ fun MusicSearchField(
         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
         decorationBox = { innerTextField ->
             Row(
-                modifier = modifier
+                modifier = Modifier
                     .fillMaxWidth()
                     .height(MusicDimens.SearchFieldHeight)
                     .background(
@@ -74,6 +83,18 @@ fun MusicSearchField(
                         )
                     }
                     innerTextField()
+                }
+                if (value.isNotEmpty() && enabled) {
+                    IconButton(
+                        onClick = { onValueChange("") },
+                        modifier = Modifier.size(40.dp),
+                    ) {
+                        Icon(
+                            imageVector = Icons.Rounded.Close,
+                            contentDescription = "Clear search",
+                            tint = MusicColors.IconMuted,
+                        )
+                    }
                 }
             }
         },
