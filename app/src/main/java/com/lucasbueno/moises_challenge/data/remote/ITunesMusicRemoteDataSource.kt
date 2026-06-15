@@ -14,15 +14,18 @@ class ITunesMusicRemoteDataSource @Inject constructor(
         offset: Int,
         limit: Int,
     ): List<Song> {
+        if (offset >= MAX_SEARCH_LIMIT) return emptyList()
+
+        val requestLimit = (offset + limit).coerceAtMost(MAX_SEARCH_LIMIT)
+
         return api.searchSongs(
             term = query,
             media = MEDIA_MUSIC,
             entity = ENTITY_SONG,
-            limit = limit,
-            offset = offset,
+            limit = requestLimit,
         ).results.mapNotNull { songDto ->
             songDto.takeIf { it.isSong() }?.toSongOrNull()
-        }
+        }.drop(offset)
     }
 
     override suspend fun lookupAlbumSongs(albumId: Long): List<Song> {
@@ -37,5 +40,6 @@ class ITunesMusicRemoteDataSource @Inject constructor(
     private companion object {
         const val MEDIA_MUSIC = "music"
         const val ENTITY_SONG = "song"
+        const val MAX_SEARCH_LIMIT = 200
     }
 }

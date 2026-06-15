@@ -7,6 +7,7 @@ import com.lucasbueno.moises_challenge.domain.repository.MusicRepository
 import com.lucasbueno.moises_challenge.presentation.common.ScreenState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
@@ -23,7 +24,17 @@ class SongDetailsViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(SongDetailsUiState())
     val uiState = _uiState.asStateFlow()
 
+    private var songJob: Job? = null
+
     init {
+        collectSong()
+    }
+
+    fun onRetry() {
+        songJob?.cancel()
+        _uiState.update { state ->
+            state.copy(screenState = ScreenState.Loading)
+        }
         collectSong()
     }
 
@@ -42,7 +53,7 @@ class SongDetailsViewModel @Inject constructor(
     }
 
     private fun collectSong() {
-        viewModelScope.launch {
+        songJob = viewModelScope.launch {
             repository.getSongFlow(songId)
                 .catch { error ->
                     _uiState.update { state ->

@@ -7,6 +7,7 @@ data class SongsUiState(
     val query: String = "",
     val searchResultsState: ScreenState = ScreenState.Show,
     val searchResults: List<Song> = emptyList(),
+    val hasReachedSearchEnd: Boolean = false,
     val recentlyPlayedState: ScreenState = ScreenState.Loading,
     val recentlyPlayedSongs: List<Song> = emptyList(),
     val isLoadingNextPage: Boolean = false,

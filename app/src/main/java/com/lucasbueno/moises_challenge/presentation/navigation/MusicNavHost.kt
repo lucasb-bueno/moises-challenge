@@ -1,19 +1,21 @@
 package com.lucasbueno.moises_challenge.presentation.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import androidx.navigation.toRoute
 import com.lucasbueno.moises_challenge.presentation.feature.album.AlbumScreen
+import com.lucasbueno.moises_challenge.presentation.feature.album.AlbumViewModel
 import com.lucasbueno.moises_challenge.presentation.feature.player.SongDetailsScreen
+import com.lucasbueno.moises_challenge.presentation.feature.player.SongDetailsViewModel
 import com.lucasbueno.moises_challenge.presentation.feature.songs.SongsScreen
-import com.lucasbueno.moises_challenge.presentation.mock.PreviewMusicData
+import com.lucasbueno.moises_challenge.presentation.feature.songs.SongsViewModel
+import kotlinx.coroutines.delay
 
 @Composable
 fun MusicNavHost(
@@ -27,44 +29,67 @@ fun MusicNavHost(
         modifier = modifier,
     ) {
         composable<SongsRoute> {
-            var query by rememberSaveable { mutableStateOf("") }
+            val viewModel = hiltViewModel<SongsViewModel>()
+            val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+            LaunchedEffect(uiState.query) {
+                if (uiState.query.isBlank()) {
+                    viewModel.onSearch()
+                    return@LaunchedEffect
+                }
+
+                delay(SEARCH_DEBOUNCE_MILLIS)
+                viewModel.onSearch()
+            }
 
             SongsScreen(
-                uiState = PreviewMusicData.songsUiState(query),
-                onQueryChanged = { query = it },
+                uiState = uiState,
+                onQueryChanged = viewModel::onQueryChanged,
                 onSongClick = { songId ->
                     navController.navigate(SongDetailsRoute(songId))
                 },
                 onAlbumClick = { albumId ->
                     navController.navigate(AlbumRoute(albumId))
                 },
+                onLoadNextPage = viewModel::onLoadNextPage,
+                onRetryClick = viewModel::onSearch,
             )
         }
 
-        composable<SongDetailsRoute> { backStackEntry ->
-            val route = backStackEntry.toRoute<SongDetailsRoute>()
+        composable<SongDetailsRoute> {
+            val viewModel = hiltViewModel<SongDetailsViewModel>()
+            val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+            LaunchedEffect(uiState.song?.id) {
+                if (uiState.song != null) {
+                    viewModel.onPlaybackStarted()
+                }
+            }
 
             SongDetailsScreen(
-                uiState = PreviewMusicData.songDetailsUiState(route.songId),
+                uiState = uiState,
                 onBackClick = navController::popBackStack,
                 onAlbumClick = { albumId ->
                     navController.navigate(AlbumRoute(albumId))
                 },
-                onRetryClick = {},
+                onRetryClick = viewModel::onRetry,
             )
         }
 
-        composable<AlbumRoute> { backStackEntry ->
-            val route = backStackEntry.toRoute<AlbumRoute>()
+        composable<AlbumRoute> {
+            val viewModel = hiltViewModel<AlbumViewModel>()
+            val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
             AlbumScreen(
-                uiState = PreviewMusicData.albumUiState(route.albumId),
+                uiState = uiState,
                 onBackClick = navController::popBackStack,
                 onSongClick = { songId ->
                     navController.navigate(SongDetailsRoute(songId))
                 },
-                onRetryClick = {},
+                onRetryClick = viewModel::onRefreshAlbum,
             )
         }
     }
 }
+
+private const val SEARCH_DEBOUNCE_MILLIS = 350L

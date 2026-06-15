@@ -66,6 +66,8 @@ class MusicRepositoryImplTest {
         val result = repository.refreshSearch(query = " daft punk ", limit = 20)
 
         assertTrue(result.isSuccess)
+        assertEquals(2, result.getOrThrow().nextOffset)
+        assertTrue(result.getOrThrow().reachedEnd)
         coVerify {
             localDataSource.replaceSearchResults(
                 query = "daft punk",
@@ -123,6 +125,8 @@ class MusicRepositoryImplTest {
         val result = repository.loadNextSearchPage(query = "queen", limit = 20)
 
         assertTrue(result.isSuccess)
+        assertEquals(23, result.getOrThrow().nextOffset)
+        assertTrue(result.getOrThrow().reachedEnd)
         coVerify {
             localDataSource.appendSearchResults(
                 query = "queen",
@@ -155,6 +159,8 @@ class MusicRepositoryImplTest {
         val result = repository.loadNextSearchPage(query = "phoenix", limit = 20)
 
         assertTrue(result.isSuccess)
+        assertEquals(20, result.getOrThrow().nextOffset)
+        assertFalse(result.getOrThrow().reachedEnd)
         coVerify {
             remoteDataSource.searchSongs(query = "phoenix", offset = 0, limit = 20)
         }
@@ -178,6 +184,8 @@ class MusicRepositoryImplTest {
         val result = repository.loadNextSearchPage(query = "nirvana", limit = 20)
 
         assertTrue(result.isSuccess)
+        assertEquals(40, result.getOrThrow().nextOffset)
+        assertTrue(result.getOrThrow().reachedEnd)
         coVerify(exactly = 0) {
             remoteDataSource.searchSongs(query = any(), offset = any(), limit = any())
         }

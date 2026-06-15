@@ -22,6 +22,7 @@ class SongsViewModel @Inject constructor(
 
     private var searchResultsJob: Job? = null
     private var searchRefreshJob: Job? = null
+    private var lastNextPageRequest: NextPageRequest? = null
 
     init {
         collectRecentlyPlayedSongs()
@@ -38,12 +39,14 @@ class SongsViewModel @Inject constructor(
 
         searchResultsJob?.cancel()
         searchRefreshJob?.cancel()
+        lastNextPageRequest = null
 
         if (query.isBlank()) {
             _uiState.update { state ->
                 state.copy(
                     searchResultsState = ScreenState.Show,
                     searchResults = emptyList(),
+                    hasReachedSearchEnd = false,
                     isLoadingNextPage = false,
                 )
             }
@@ -56,7 +59,23 @@ class SongsViewModel @Inject constructor(
 
     fun onLoadNextPage() {
         val query = uiState.value.query.trim()
-        if (query.isBlank() || uiState.value.isLoadingNextPage) return
+        val currentSearchResultCount = uiState.value.searchResults.size
+        val request = NextPageRequest(
+            query = query,
+            searchResultCount = currentSearchResultCount,
+        )
+
+        if (
+            query.isBlank() ||
+            currentSearchResultCount == 0 ||
+            uiState.value.isLoadingNextPage ||
+            uiState.value.hasReachedSearchEnd ||
+            request == lastNextPageRequest
+        ) {
+            return
+        }
+
+        lastNextPageRequest = request
 
         viewModelScope.launch {
             _uiState.update { state ->
@@ -74,6 +93,7 @@ class SongsViewModel @Inject constructor(
                     } else {
                         ScreenState.Error(result.exceptionOrNull()?.message)
                     },
+                    hasReachedSearchEnd = result.getOrNull()?.reachedEnd ?: state.hasReachedSearchEnd,
                     isLoadingNextPage = false,
                 )
             }
@@ -133,6 +153,7 @@ class SongsViewModel @Inject constructor(
             _uiState.update { state ->
                 state.copy(
                     searchResultsState = ScreenState.Loading,
+                    hasReachedSearchEnd = false,
                     isLoadingNextPage = false,
                 )
             }
@@ -149,7 +170,10 @@ class SongsViewModel @Inject constructor(
                 }
             } else {
                 _uiState.update { state ->
-                    state.copy(searchResultsState = ScreenState.Show)
+                    state.copy(
+                        searchResultsState = ScreenState.Show,
+                        hasReachedSearchEnd = result.getOrThrow().reachedEnd,
+                    )
                 }
             }
         }
@@ -159,4 +183,9 @@ class SongsViewModel @Inject constructor(
         const val SEARCH_PAGE_SIZE = 20
         const val RECENTLY_PLAYED_LIMIT = 10
     }
+
+    private data class NextPageRequest(
+        val query: String,
+        val searchResultCount: Int,
+    )
 }
