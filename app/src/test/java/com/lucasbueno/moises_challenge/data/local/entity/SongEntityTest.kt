@@ -20,7 +20,7 @@ class SongEntityTest {
             releaseDate = "2026-01-01T00:00:00Z",
         )
 
-        val entity = song.toEntity()
+        val entity = song.toEntity(lastAccessedAtMillis = 1_000L)
 
         assertEquals(
             SongEntity(
@@ -34,6 +34,7 @@ class SongEntityTest {
                 durationMillis = 30_000L,
                 genre = "Pop",
                 releaseDate = "2026-01-01T00:00:00Z",
+                lastAccessedAtMillis = 1_000L,
             ),
             entity,
         )
@@ -52,6 +53,7 @@ class SongEntityTest {
             durationMillis = 30_000L,
             genre = "Pop",
             releaseDate = "2026-01-01T00:00:00Z",
+            lastAccessedAtMillis = 1_000L,
         )
 
         val song = entity.toDomain()

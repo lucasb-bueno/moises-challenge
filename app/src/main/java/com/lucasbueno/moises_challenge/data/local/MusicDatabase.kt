@@ -16,7 +16,7 @@ import com.lucasbueno.moises_challenge.data.local.entity.SongEntity
         SearchResultEntity::class,
         RecentlyPlayedEntity::class,
     ],
-    version = 1,
+    version = 2,
     exportSchema = true,
 )
 abstract class MusicDatabase : RoomDatabase() {

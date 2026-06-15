@@ -1,10 +1,16 @@
 package com.lucasbueno.moises_challenge.data.local.entity
 
 import androidx.room.Entity
+import androidx.room.Index
 import androidx.room.PrimaryKey
 import com.lucasbueno.moises_challenge.domain.model.Song
 
-@Entity(tableName = "songs")
+@Entity(
+    tableName = "songs",
+    indices = [
+        Index(value = ["lastAccessedAtMillis"]),
+    ],
+)
 data class SongEntity(
     @PrimaryKey
     val id: Long,
@@ -17,6 +23,7 @@ data class SongEntity(
     val durationMillis: Long?,
     val genre: String?,
     val releaseDate: String?,
+    val lastAccessedAtMillis: Long,
 )
 
 fun SongEntity.toDomain(): Song {
@@ -34,7 +41,7 @@ fun SongEntity.toDomain(): Song {
     )
 }
 
-fun Song.toEntity(): SongEntity {
+fun Song.toEntity(lastAccessedAtMillis: Long): SongEntity {
     return SongEntity(
         id = id,
         name = name,
@@ -46,5 +53,6 @@ fun Song.toEntity(): SongEntity {
         durationMillis = durationMillis,
         genre = genre,
         releaseDate = releaseDate,
+        lastAccessedAtMillis = lastAccessedAtMillis,
     )
 }

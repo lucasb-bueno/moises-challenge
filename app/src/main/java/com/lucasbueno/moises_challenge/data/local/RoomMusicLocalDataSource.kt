@@ -53,9 +53,11 @@ class RoomMusicLocalDataSource @Inject constructor(
         nextOffset: Int,
         reachedEnd: Boolean,
         updatedAtMillis: Long,
+        songCacheMaxSize: Int,
+        searchCacheMaxQueries: Int,
     ) {
         database.withTransaction {
-            songDao.upsertSongs(songs.map { it.toEntity() })
+            songDao.upsertSongs(songs.map { it.toEntity(lastAccessedAtMillis = updatedAtMillis) })
             searchDao.replaceSearchResults(
                 searchQuery = searchQuery(
                     query = query,
@@ -64,6 +66,10 @@ class RoomMusicLocalDataSource @Inject constructor(
                     updatedAtMillis = updatedAtMillis,
                 ),
                 searchResults = songs.toSearchResults(query = query, startPosition = 0),
+            )
+            recycleBoundedCaches(
+                songCacheMaxSize = songCacheMaxSize,
+                searchCacheMaxQueries = searchCacheMaxQueries,
             )
         }
     }
@@ -74,11 +80,13 @@ class RoomMusicLocalDataSource @Inject constructor(
         nextOffset: Int,
         reachedEnd: Boolean,
         updatedAtMillis: Long,
+        songCacheMaxSize: Int,
+        searchCacheMaxQueries: Int,
     ) {
         database.withTransaction {
-            val startPosition = searchDao.getSearchResultCount(query)
+            val startPosition = searchDao.getNextSearchResultPosition(query)
 
-            songDao.upsertSongs(songs.map { it.toEntity() })
+            songDao.upsertSongs(songs.map { it.toEntity(lastAccessedAtMillis = updatedAtMillis) })
             searchDao.appendSearchResults(
                 searchQuery = searchQuery(
                     query = query,
@@ -91,20 +99,59 @@ class RoomMusicLocalDataSource @Inject constructor(
                     startPosition = startPosition,
                 ),
             )
+            recycleBoundedCaches(
+                songCacheMaxSize = songCacheMaxSize,
+                searchCacheMaxQueries = searchCacheMaxQueries,
+            )
         }
     }
 
-    override suspend fun cacheSongs(songs: List<Song>) {
-        songDao.upsertSongs(songs.map { it.toEntity() })
+    override suspend fun cacheSongs(
+        songs: List<Song>,
+        accessedAtMillis: Long,
+        songCacheMaxSize: Int,
+    ) {
+        database.withTransaction {
+            songDao.upsertSongs(songs.map { it.toEntity(lastAccessedAtMillis = accessedAtMillis) })
+            songDao.pruneSongsToSize(songCacheMaxSize.coerceAtLeast(MIN_CACHE_SIZE))
+        }
     }
 
-    override suspend fun markAsRecentlyPlayed(songId: Long, playedAtMillis: Long) {
-        songDao.upsertRecentlyPlayed(
-            RecentlyPlayedEntity(
+    override suspend fun markAsRecentlyPlayed(
+        songId: Long,
+        playedAtMillis: Long,
+        recentlyPlayedMaxSize: Int,
+        songCacheMaxSize: Int,
+    ) {
+        database.withTransaction {
+            songDao.updateSongLastAccessedAt(
                 songId = songId,
-                playedAtMillis = playedAtMillis,
-            ),
-        )
+                lastAccessedAtMillis = playedAtMillis,
+            )
+            songDao.upsertRecentlyPlayed(
+                RecentlyPlayedEntity(
+                    songId = songId,
+                    playedAtMillis = playedAtMillis,
+                ),
+            )
+            songDao.pruneRecentlyPlayedToSize(recentlyPlayedMaxSize.coerceAtLeast(MIN_CACHE_SIZE))
+            songDao.pruneSongsToSize(songCacheMaxSize.coerceAtLeast(MIN_CACHE_SIZE))
+        }
+    }
+
+    override suspend fun recycleRecentlyPlayedCache(
+        recentlyPlayedExpiresBeforeMillis: Long,
+        recentlyPlayedMaxSize: Int,
+    ) {
+        database.withTransaction {
+            songDao.deleteRecentlyPlayedOlderThan(recentlyPlayedExpiresBeforeMillis)
+            songDao.pruneRecentlyPlayedToSize(recentlyPlayedMaxSize.coerceAtLeast(MIN_CACHE_SIZE))
+        }
+    }
+
+    private suspend fun recycleBoundedCaches(songCacheMaxSize: Int, searchCacheMaxQueries: Int) {
+        searchDao.pruneSearchQueriesToSize(searchCacheMaxQueries.coerceAtLeast(MIN_CACHE_SIZE))
+        songDao.pruneSongsToSize(songCacheMaxSize.coerceAtLeast(MIN_CACHE_SIZE))
     }
 
     private fun searchQuery(
@@ -145,5 +192,9 @@ class RoomMusicLocalDataSource @Inject constructor(
             artworkUrl = firstSong.artworkUrl,
             songs = songs,
         )
+    }
+
+    private companion object {
+        const val MIN_CACHE_SIZE = 0
     }
 }

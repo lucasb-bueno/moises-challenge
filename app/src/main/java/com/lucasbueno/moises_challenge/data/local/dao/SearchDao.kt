@@ -29,6 +29,9 @@ interface SearchDao {
     @Query("SELECT COUNT(*) FROM search_results WHERE query = :query")
     suspend fun getSearchResultCount(query: String): Int
 
+    @Query("SELECT COALESCE(MAX(position) + 1, 0) FROM search_results WHERE query = :query")
+    suspend fun getNextSearchResultPosition(query: String): Int
+
     @Upsert
     suspend fun upsertSearchQuery(searchQuery: SearchQueryEntity)
 
@@ -37,6 +40,18 @@ interface SearchDao {
 
     @Query("DELETE FROM search_results WHERE query = :query")
     suspend fun deleteSearchResults(query: String)
+
+    @Query(
+        """
+        DELETE FROM search_queries
+        WHERE query NOT IN (
+            SELECT query FROM search_queries
+            ORDER BY updatedAtMillis DESC, query DESC
+            LIMIT :maxSize
+        )
+        """,
+    )
+    suspend fun pruneSearchQueriesToSize(maxSize: Int)
 
     @Transaction
     suspend fun replaceSearchResults(

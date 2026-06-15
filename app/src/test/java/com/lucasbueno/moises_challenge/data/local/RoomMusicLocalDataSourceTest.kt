@@ -44,6 +44,8 @@ class RoomMusicLocalDataSourceTest {
             nextOffset = 2,
             reachedEnd = false,
             updatedAtMillis = 1_000L,
+            songCacheMaxSize = 10,
+            searchCacheMaxQueries = 10,
         )
 
         val results = dataSource.getSearchResultsFlow("daft punk").first()
@@ -61,6 +63,8 @@ class RoomMusicLocalDataSourceTest {
             nextOffset = 1,
             reachedEnd = false,
             updatedAtMillis = 1_000L,
+            songCacheMaxSize = 10,
+            searchCacheMaxQueries = 10,
         )
         dataSource.appendSearchResults(
             query = "radiohead",
@@ -68,6 +72,8 @@ class RoomMusicLocalDataSourceTest {
             nextOffset = 2,
             reachedEnd = true,
             updatedAtMillis = 2_000L,
+            songCacheMaxSize = 10,
+            searchCacheMaxQueries = 10,
         )
 
         val results = dataSource.getSearchResultsFlow("radiohead").first()
@@ -90,6 +96,8 @@ class RoomMusicLocalDataSourceTest {
                 ),
                 song(id = 2L, name = "Other album song", albumId = 20L),
             ),
+            accessedAtMillis = 1_000L,
+            songCacheMaxSize = 10,
         )
 
         val album = dataSource.getAlbumFlow(albumId = 10L).first()
@@ -115,13 +123,178 @@ class RoomMusicLocalDataSourceTest {
                 song(id = 1L, name = "Older"),
                 song(id = 2L, name = "Latest"),
             ),
+            accessedAtMillis = 1_000L,
+            songCacheMaxSize = 10,
         )
-        dataSource.markAsRecentlyPlayed(songId = 1L, playedAtMillis = 1_000L)
-        dataSource.markAsRecentlyPlayed(songId = 2L, playedAtMillis = 2_000L)
+        markAsRecentlyPlayed(songId = 1L, playedAtMillis = 1_000L, recentlyPlayedMaxSize = 10)
+        markAsRecentlyPlayed(songId = 2L, playedAtMillis = 2_000L, recentlyPlayedMaxSize = 10)
 
         val results = dataSource.getRecentlyPlayedSongsFlow(limit = 2).first()
 
         assertEquals(listOf("Latest", "Older"), results.map { it.name })
+    }
+
+    @Test
+    fun `markAsRecentlyPlayed prunes oldest songs when cache is full`() = runTest {
+        dataSource.cacheSongs(
+            listOf(
+                song(id = 1L, name = "Oldest"),
+                song(id = 2L, name = "Middle"),
+                song(id = 3L, name = "Latest"),
+            ),
+            accessedAtMillis = 1_000L,
+            songCacheMaxSize = 10,
+        )
+
+        markAsRecentlyPlayed(songId = 1L, playedAtMillis = 1_000L, recentlyPlayedMaxSize = 2)
+        markAsRecentlyPlayed(songId = 2L, playedAtMillis = 2_000L, recentlyPlayedMaxSize = 2)
+        markAsRecentlyPlayed(songId = 3L, playedAtMillis = 3_000L, recentlyPlayedMaxSize = 2)
+
+        val results = dataSource.getRecentlyPlayedSongsFlow(limit = 10).first()
+
+        assertEquals(listOf("Latest", "Middle"), results.map { it.name })
+    }
+
+    @Test
+    fun `markAsRecentlyPlayed refreshes replayed song before pruning`() = runTest {
+        dataSource.cacheSongs(
+            listOf(
+                song(id = 1L, name = "Replayed"),
+                song(id = 2L, name = "Oldest"),
+                song(id = 3L, name = "Latest"),
+            ),
+            accessedAtMillis = 1_000L,
+            songCacheMaxSize = 10,
+        )
+
+        markAsRecentlyPlayed(songId = 1L, playedAtMillis = 1_000L, recentlyPlayedMaxSize = 3)
+        markAsRecentlyPlayed(songId = 2L, playedAtMillis = 2_000L, recentlyPlayedMaxSize = 3)
+        markAsRecentlyPlayed(songId = 3L, playedAtMillis = 3_000L, recentlyPlayedMaxSize = 3)
+        markAsRecentlyPlayed(songId = 1L, playedAtMillis = 4_000L, recentlyPlayedMaxSize = 2)
+
+        val results = dataSource.getRecentlyPlayedSongsFlow(limit = 10).first()
+
+        assertEquals(listOf("Replayed", "Latest"), results.map { it.name })
+    }
+
+    @Test
+    fun `recycleRecentlyPlayedCache removes expired songs`() = runTest {
+        dataSource.cacheSongs(
+            listOf(
+                song(id = 1L, name = "Expired"),
+                song(id = 2L, name = "Fresh"),
+            ),
+            accessedAtMillis = 1_000L,
+            songCacheMaxSize = 10,
+        )
+        markAsRecentlyPlayed(songId = 1L, playedAtMillis = 1_000L, recentlyPlayedMaxSize = 10)
+        markAsRecentlyPlayed(songId = 2L, playedAtMillis = 3_000L, recentlyPlayedMaxSize = 10)
+
+        recycleRecentlyPlayedCache(
+            recentlyPlayedExpiresBeforeMillis = 2_000L,
+            recentlyPlayedMaxSize = 10,
+        )
+
+        val results = dataSource.getRecentlyPlayedSongsFlow(limit = 10).first()
+
+        assertEquals(listOf("Fresh"), results.map { it.name })
+    }
+
+    @Test
+    fun `recycleRecentlyPlayedCache prunes overflow with LRU order`() = runTest {
+        dataSource.cacheSongs(
+            listOf(
+                song(id = 1L, name = "Oldest"),
+                song(id = 2L, name = "Middle"),
+                song(id = 3L, name = "Latest"),
+            ),
+            accessedAtMillis = 1_000L,
+            songCacheMaxSize = 10,
+        )
+        markAsRecentlyPlayed(songId = 1L, playedAtMillis = 1_000L, recentlyPlayedMaxSize = 10)
+        markAsRecentlyPlayed(songId = 2L, playedAtMillis = 2_000L, recentlyPlayedMaxSize = 10)
+        markAsRecentlyPlayed(songId = 3L, playedAtMillis = 3_000L, recentlyPlayedMaxSize = 10)
+
+        recycleRecentlyPlayedCache(
+            recentlyPlayedExpiresBeforeMillis = 0L,
+            recentlyPlayedMaxSize = 2,
+        )
+
+        val results = dataSource.getRecentlyPlayedSongsFlow(limit = 10).first()
+
+        assertEquals(listOf("Latest", "Middle"), results.map { it.name })
+    }
+
+    @Test
+    fun `cacheSongs prunes oldest shared song cache entries`() = runTest {
+        dataSource.cacheSongs(
+            songs = listOf(song(id = 1L, name = "Old")),
+            accessedAtMillis = 1_000L,
+            songCacheMaxSize = 10,
+        )
+        dataSource.cacheSongs(
+            songs = listOf(song(id = 2L, name = "Fresh")),
+            accessedAtMillis = 2_000L,
+            songCacheMaxSize = 1,
+        )
+
+        val oldSong = dataSource.getSongFlow(songId = 1L).first()
+        val freshSong = dataSource.getSongFlow(songId = 2L).first()
+
+        assertNull(oldSong)
+        assertEquals("Fresh", freshSong?.name)
+    }
+
+    @Test
+    fun `replaceSearchResults prunes oldest search queries`() = runTest {
+        dataSource.replaceSearchResults(
+            query = "older",
+            songs = listOf(song(id = 1L, name = "Older")),
+            nextOffset = 1,
+            reachedEnd = true,
+            updatedAtMillis = 1_000L,
+            songCacheMaxSize = 10,
+            searchCacheMaxQueries = 10,
+        )
+        dataSource.replaceSearchResults(
+            query = "newer",
+            songs = listOf(song(id = 2L, name = "Newer")),
+            nextOffset = 1,
+            reachedEnd = true,
+            updatedAtMillis = 2_000L,
+            songCacheMaxSize = 10,
+            searchCacheMaxQueries = 1,
+        )
+
+        assertNull(dataSource.getSearchMetadata("older"))
+        assertEquals(
+            CachedSearchMetadata(nextOffset = 1, reachedEnd = true),
+            dataSource.getSearchMetadata("newer"),
+        )
+        assertEquals(emptyList<Song>(), dataSource.getSearchResultsFlow("older").first())
+    }
+
+    private suspend fun markAsRecentlyPlayed(
+        songId: Long,
+        playedAtMillis: Long,
+        recentlyPlayedMaxSize: Int,
+    ) {
+        dataSource.markAsRecentlyPlayed(
+            songId = songId,
+            playedAtMillis = playedAtMillis,
+            recentlyPlayedMaxSize = recentlyPlayedMaxSize,
+            songCacheMaxSize = 10,
+        )
+    }
+
+    private suspend fun recycleRecentlyPlayedCache(
+        recentlyPlayedExpiresBeforeMillis: Long,
+        recentlyPlayedMaxSize: Int,
+    ) {
+        dataSource.recycleRecentlyPlayedCache(
+            recentlyPlayedExpiresBeforeMillis = recentlyPlayedExpiresBeforeMillis,
+            recentlyPlayedMaxSize = recentlyPlayedMaxSize,
+        )
     }
 
     private fun song(

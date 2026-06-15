@@ -21,6 +21,8 @@ interface MusicLocalDataSource {
         nextOffset: Int,
         reachedEnd: Boolean,
         updatedAtMillis: Long,
+        songCacheMaxSize: Int,
+        searchCacheMaxQueries: Int,
     )
 
     suspend fun appendSearchResults(
@@ -29,9 +31,21 @@ interface MusicLocalDataSource {
         nextOffset: Int,
         reachedEnd: Boolean,
         updatedAtMillis: Long,
+        songCacheMaxSize: Int,
+        searchCacheMaxQueries: Int,
     )
 
-    suspend fun cacheSongs(songs: List<Song>)
+    suspend fun cacheSongs(songs: List<Song>, accessedAtMillis: Long, songCacheMaxSize: Int)
 
-    suspend fun markAsRecentlyPlayed(songId: Long, playedAtMillis: Long)
+    suspend fun markAsRecentlyPlayed(
+        songId: Long,
+        playedAtMillis: Long,
+        recentlyPlayedMaxSize: Int,
+        songCacheMaxSize: Int,
+    )
+
+    suspend fun recycleRecentlyPlayedCache(
+        recentlyPlayedExpiresBeforeMillis: Long,
+        recentlyPlayedMaxSize: Int,
+    )
 }
